@@ -1,0 +1,1247 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Womafreesm — Internal Team Hub</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;0,8..60,700;1,8..60,500&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#E9E7DE;
+    --panel:#FCFBF8;
+    --ink:#1D1F2B;
+    --ink-soft:#54544f;
+    --line:#C9C2AF;
+    --line-soft:#DAD5C6;
+    --seal:#9C6B1F;
+    --seal-ink:#7a5417;
+    --accent-research:#2C6E63;
+    --accent-pathway:#9E4B54;
+    --accent-assembly:#3B4A73;
+    --accent-wlce:#9C6B1F;
+    --accent-spirit:#6E5A8C;
+    --accent-culture:#B5732E;
+    --accent-reading:#4A6741;
+    --radius:2px;
+    --shadow: 0 1px 0 rgba(29,31,43,0.06);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--paper);
+    color:var(--ink);
+    font-family:'IBM Plex Sans', sans-serif;
+    font-size:15px;
+    line-height:1.5;
+    -webkit-font-smoothing:antialiased;
+  }
+  h1,h2,h3,.serif{ font-family:'Source Serif 4', serif; }
+  .mono{ font-family:'IBM Plex Mono', monospace; letter-spacing:0.01em;}
+  a{ color:inherit; }
+  button{ font-family:inherit; cursor:pointer; }
+
+  /* ===== Shell layout ===== */
+  .shell{ display:grid; grid-template-columns:230px 1fr; min-height:100vh; }
+
+  /* ===== Top bar ===== */
+  .topbar{
+    grid-column:1 / -1;
+    display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px;
+    padding:14px 28px; border-bottom:1px solid var(--line);
+    background:var(--paper);
+    position:sticky; top:0; z-index:20;
+  }
+  .brand{ display:flex; align-items:baseline; gap:10px; min-width:0; }
+  .brand .mark{
+    width:30px;height:30px;border:1.5px solid var(--ink); border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+    font-family:'Source Serif 4',serif; font-weight:700; font-size:14px;
+    flex:none;
+  }
+  .brand h1{ font-size:17px; margin:0; font-weight:600; }
+  .brand .sub{ font-size:12px; color:var(--ink-soft); font-family:'IBM Plex Mono',monospace; }
+  .topbar-right{ display:flex; align-items:center; gap:18px; flex-wrap:wrap; }
+  .clock{ font-family:'IBM Plex Mono',monospace; font-size:12.5px; color:var(--ink-soft); text-align:right; white-space:nowrap; }
+  .search-box{ position:relative; }
+  .search-box input{
+    width:220px; padding:7px 10px 7px 30px; border:1px solid var(--line);
+    background:var(--panel); font-family:inherit; font-size:13px; border-radius:var(--radius);
+    color:var(--ink);
+  }
+  .search-box input:focus{ outline:2px solid var(--seal); outline-offset:1px; }
+  .search-box::before{
+    content:"⌕"; position:absolute; left:9px; top:6px; color:var(--ink-soft); font-size:15px;
+  }
+
+  /* ===== Left rail (desktop: fixed vertical column) ===== */
+  .rail{
+    border-right:1px solid var(--line);
+    padding:18px 0;
+    position:sticky; top:65px; align-self:start; height:calc(100vh - 65px); overflow-y:auto;
+  }
+  .rail-group-label{
+    font-size:10.5px; text-transform:uppercase; letter-spacing:.09em; color:var(--ink-soft);
+    padding:4px 22px; margin-top:10px;
+  }
+  .rail button.nav-item{
+    display:flex; align-items:center; gap:11px; width:100%; text-align:left;
+    background:none; border:none; padding:10px 22px; font-size:13.5px; color:var(--ink);
+    border-left:3px solid transparent;
+  }
+  .rail button.nav-item .num{ font-family:'IBM Plex Mono',monospace; font-size:11px; color:var(--ink-soft); width:16px;}
+  .rail button.nav-item:hover{ background:rgba(0,0,0,0.03); }
+  .rail button.nav-item.active{ border-left:3px solid var(--seal); background:var(--panel); font-weight:600; }
+  .rail button.nav-item.active .num{ color:var(--seal); }
+  .rail-foot{ padding:16px 22px; margin-top:20px; border-top:1px solid var(--line-soft); }
+  .rail-foot summary{ font-size:10.5px; text-transform:uppercase; letter-spacing:.09em; color:var(--ink-soft); cursor:pointer; list-style:none; }
+  .rail-foot summary::-webkit-details-marker{ display:none; }
+  .rail-foot .links{ margin-top:10px; }
+  .rail-foot a{ display:block; font-size:12px; color:var(--ink-soft); margin-bottom:6px; text-decoration:none; padding:4px 0; }
+  .rail-foot a:hover{ color:var(--seal-ink); text-decoration:underline; }
+
+  /* ===== Main ===== */
+  main{ padding:30px 40px 80px; max-width:1080px; }
+
+  /* =========================================================================
+     MOBILE ADAPTATION (<=860px)
+     Rail becomes a horizontal, thumb-scrollable tab strip pinned under the
+     topbar instead of a full-height side column; footer links collapse into
+     a native <details> accordion so they don't eat vertical space by default.
+     ========================================================================= */
+  @media (max-width:860px){
+    .shell{ grid-template-columns:1fr; }
+
+    .topbar{ padding:12px 16px; gap:8px; }
+    .brand h1{ font-size:15px; }
+    .brand .sub{ font-size:10.5px; }
+    .topbar-right{ width:100%; justify-content:space-between; gap:10px; order:3; }
+    .search-box{ flex:1; }
+    .search-box input{ width:100%; font-size:16px; }
+    .clock{ font-size:11px; text-align:left; }
+
+    .rail{
+      position:sticky; top:0; height:auto; max-height:none; overflow:visible;
+      border-right:none; border-bottom:1px solid var(--line); padding:10px 0 0;
+      background:var(--paper); z-index:15;
+    }
+    .rail-group-label{ display:none; }
+    .rail-scroll{
+      display:flex; gap:2px; overflow-x:auto; padding:0 12px 10px;
+      -webkit-overflow-scrolling:touch; scrollbar-width:none;
+    }
+    .rail-scroll::-webkit-scrollbar{ display:none; }
+    .rail button.nav-item{
+      width:auto; flex:none; white-space:nowrap; padding:8px 14px;
+      border-left:none; border-bottom:3px solid transparent; border-radius:0;
+      font-size:12.5px;
+    }
+    .rail button.nav-item.active{ border-left:none; border-bottom:3px solid var(--seal); background:none; }
+    .rail-foot{
+      padding:0; margin:0; border-top:1px solid var(--line-soft);
+    }
+    .rail-foot summary{
+      list-style:none; cursor:pointer; padding:9px 16px; font-size:11.5px;
+      color:var(--ink-soft); text-transform:uppercase; letter-spacing:.05em;
+      display:flex; align-items:center; justify-content:space-between;
+    }
+    .rail-foot summary::-webkit-details-marker{ display:none; }
+    .rail-foot summary::after{ content:"▾"; font-size:10px; }
+    .rail-foot[open] summary::after{ content:"▴"; }
+    .rail-foot .links{ padding:0 16px 12px; }
+    .rail-foot a{ padding:6px 0; }
+
+    main{ padding:18px 16px 64px; }
+    .view-head h2{ font-size:21px; }
+    .view-head p{ font-size:13px; }
+    .card{ padding:15px 16px; }
+    .actions-row{ justify-content:stretch; }
+    .actions-row .btn{ flex:1; justify-content:center; }
+  }
+  @media (max-width:480px){
+    .brand .sub{ display:none; }
+    .snapshot{ grid-template-columns:1fr 1fr; }
+    .snapshot .cell{ padding:12px 14px; }
+    .person, .reg-card, .card{ padding:14px; }
+    .modal{ padding:18px; }
+  }
+  .demo-banner{
+    display:flex; align-items:start; gap:10px;
+    background:#F5EFE0; border:1px solid var(--line); padding:10px 14px;
+    font-size:12.5px; color:var(--ink-soft); margin-bottom:26px; border-radius:var(--radius);
+  }
+  .demo-banner b{ color:var(--seal-ink); }
+
+  section.view{ display:none; }
+  section.view.active{ display:block; animation:fadein .25s ease; }
+  @keyframes fadein{ from{opacity:0; transform:translateY(4px);} to{opacity:1; transform:none;} }
+
+  .view-head{ margin-bottom:22px; border-bottom:1px solid var(--line); padding-bottom:16px; }
+  .view-head .kicker{ font-family:'IBM Plex Mono',monospace; font-size:11.5px; color:var(--seal-ink); text-transform:uppercase; letter-spacing:.08em; }
+  .view-head h2{ font-size:26px; margin:4px 0 6px; }
+  .view-head p{ margin:0; color:var(--ink-soft); max-width:640px; font-size:14px; }
+
+  /* Hero / snapshot (Today) */
+  .snapshot{
+    display:grid; grid-template-columns:repeat(4,1fr); gap:1px;
+    background:var(--line); border:1px solid var(--line); margin-bottom:30px;
+  }
+  .snapshot .cell{ background:var(--panel); padding:16px 18px; }
+  .snapshot .cell .num{ font-family:'Source Serif 4',serif; font-size:28px; font-weight:600; }
+  .snapshot .cell .label{ font-size:12px; color:var(--ink-soft); margin-top:2px; }
+  @media (max-width:700px){ .snapshot{ grid-template-columns:1fr 1fr; } }
+
+  .hero-grid{ display:grid; grid-template-columns:1.4fr 1fr; gap:22px; margin-bottom:10px; }
+  @media (max-width:820px){ .hero-grid{ grid-template-columns:1fr; } }
+  .card{ background:var(--panel); border:1px solid var(--line); border-radius:var(--radius); padding:18px 20px; }
+  .card h3{ font-size:14px; margin:0 0 10px; text-transform:uppercase; letter-spacing:.04em; color:var(--ink-soft); font-family:'IBM Plex Sans'; font-weight:600; }
+  .mission-line{ font-family:'Source Serif 4',serif; font-size:19px; line-height:1.45; margin:0 0 14px; }
+  .chip-row{ display:flex; flex-wrap:wrap; gap:6px; margin-top:8px; }
+  .chip{ font-size:11.5px; border:1px solid var(--line); padding:3px 9px; border-radius:20px; color:var(--ink-soft); }
+
+  /* Filters */
+  .filter-row{ display:flex; gap:8px; flex-wrap:wrap; margin-bottom:18px; }
+  .filter-row button{
+    border:1px solid var(--line); background:var(--panel); padding:6px 12px; border-radius:20px;
+    font-size:12.5px; color:var(--ink-soft);
+  }
+  .filter-row button.active{ background:var(--ink); color:var(--panel); border-color:var(--ink); }
+
+  /* Team */
+  .team-grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(240px,1fr)); gap:14px; }
+  .person{ background:var(--panel); border:1px solid var(--line); border-radius:var(--radius); padding:16px; position:relative;}
+  .person .phead{ display:flex; align-items:center; gap:12px; margin-bottom:4px; }
+  .person .photo{
+    width:48px; height:48px; border-radius:50%; object-fit:cover; flex:none;
+    box-shadow:0 0 0 1px var(--line);
+  }
+  .person .role{ font-size:11px; text-transform:uppercase; letter-spacing:.05em; color:var(--seal-ink); font-family:'IBM Plex Mono',monospace; margin-bottom:6px;}
+  .person .name{ font-family:'Source Serif 4',serif; font-size:17px; font-weight:600; margin-bottom:4px; }
+  .person .scope{ font-size:12.5px; color:var(--ink-soft); margin-bottom:10px; min-height:34px;}
+  .person .meta{ font-size:11.5px; color:var(--ink-soft); display:flex; justify-content:space-between; border-top:1px solid var(--line-soft); padding-top:8px;}
+  .badge-demo{ position:absolute; top:12px; right:12px; font-size:9.5px; font-family:'IBM Plex Mono',monospace; color:#b08b3f; border:1px solid #d8c290; padding:1px 6px; border-radius:10px; background:#fbf5e8;}
+
+  /* ===== Org chart: layers, committees, departments ===== */
+  .layer-block{ margin-bottom:34px; }
+  .layer-head{ display:flex; align-items:baseline; gap:10px; margin-bottom:12px; }
+  .layer-head .lnum{
+    font-family:'IBM Plex Mono',monospace; font-size:12px; color:var(--panel); background:var(--ink);
+    width:22px; height:22px; border-radius:50%; display:flex; align-items:center; justify-content:center; flex:none;
+  }
+  .layer-head h3{ font-family:'Source Serif 4',serif; font-size:17px; margin:0; }
+  .layer-head .lsub{ font-size:12px; color:var(--ink-soft); }
+
+  .committee-grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:10px; margin-top:12px; }
+  .committee-card{ background:var(--panel); border:1px solid var(--line); border-radius:var(--radius); padding:12px 14px; }
+  .committee-card .cname{ font-size:13px; font-weight:600; margin-bottom:4px; }
+  .committee-card .cdesc{ font-size:11.5px; color:var(--ink-soft); }
+
+  .dept-grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:14px; }
+  .dept-card{ background:var(--panel); border:1px solid var(--line); border-radius:var(--radius); padding:16px 18px; }
+  .dept-card .dname{ font-family:'Source Serif 4',serif; font-size:15.5px; font-weight:600; }
+  .dept-card .dua{ font-size:12px; color:var(--ink-soft); margin-top:2px; }
+  .dept-card .dhead{ font-size:11.5px; font-family:'IBM Plex Mono',monospace; color:var(--seal-ink); margin:8px 0 10px; padding-top:8px; border-top:1px solid var(--line-soft); }
+  .dept-card .dhead.unassigned{ color:var(--ink-soft); }
+  .func-chip-row{ display:flex; flex-wrap:wrap; gap:5px; }
+  .func-chip{ font-size:10.5px; border:1px solid var(--line-soft); padding:2px 8px; border-radius:12px; color:var(--ink-soft); }
+
+  .flow-legend{ display:flex; flex-wrap:wrap; gap:16px; padding:14px 18px; background:var(--panel); border:1px solid var(--line); border-radius:var(--radius); margin-bottom:30px; }
+  .flow-legend .fitem{ display:flex; align-items:center; gap:7px; font-size:12px; color:var(--ink-soft); }
+  .flow-legend .fsym{ font-family:'IBM Plex Mono',monospace; color:var(--seal-ink); font-size:14px; width:16px; text-align:center; }
+
+  .global-strip{ display:flex; flex-wrap:wrap; gap:8px; margin:14px 0 18px; }
+  .region-chip{ font-size:12px; border:1px solid var(--line); padding:5px 12px; border-radius:20px; background:var(--panel); }
+  .global-levels{ list-style:none; margin:0; padding:0; }
+  .global-levels li{ display:flex; align-items:center; gap:12px; padding:10px 0; border-bottom:1px solid var(--line-soft); font-size:13.5px; }
+  .global-levels li .arrow{ color:var(--seal-ink); font-family:'IBM Plex Mono',monospace; }
+
+  .doors-grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:12px; margin-bottom:26px; }
+  .door-card{ background:var(--panel); border:1px solid var(--line); border-radius:var(--radius); padding:16px 14px; text-align:center; }
+  .door-card .dicon{ font-size:22px; margin-bottom:8px; }
+  .door-card .dtitle{ font-family:'Source Serif 4',serif; font-size:14.5px; font-weight:600; }
+  .door-card .dtag{ font-size:11px; color:var(--ink-soft); font-family:'IBM Plex Mono',monospace; margin-top:3px; }
+
+  .flagship-badge{ font-size:10px; text-transform:uppercase; letter-spacing:.04em; color:#7a5417; background:#fbf1dc; border:1px solid #e6cd9a; padding:2px 7px; border-radius:10px; margin-left:8px; }
+
+  .compliance-row{ display:flex; flex-wrap:wrap; gap:8px 18px; padding:14px 0; }
+  .compliance-row .citem{ display:flex; align-items:center; gap:6px; font-size:12px; color:var(--ink-soft); }
+  .compliance-row .citem::before{ content:"✓"; color:var(--accent-research); font-weight:700; }
+
+  .mission-block{ text-align:left; }
+  .mission-tagline{ font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:.06em; color:var(--seal-ink); text-transform:uppercase; margin-bottom:6px; }
+  .mission-syn{ font-size:11.5px; color:var(--ink-soft); margin-top:8px; }
+
+
+  /* Projects */
+  .project-list{ display:flex; flex-direction:column; gap:10px; }
+  .project{ background:var(--panel); border:1px solid var(--line); border-left:4px solid var(--pillar,#999); border-radius:var(--radius); padding:14px 18px; display:grid; grid-template-columns:1fr auto auto; gap:16px; align-items:center; }
+  @media (max-width:700px){ .project{ grid-template-columns:1fr; } }
+  .project .title{ font-family:'Source Serif 4',serif; font-size:16.5px; font-weight:600; }
+  .project .pillar-tag{ font-size:11px; color:var(--ink-soft); font-family:'IBM Plex Mono',monospace; margin-top:2px;}
+  .project .desc{ font-size:13px; color:var(--ink-soft); margin-top:5px; max-width:520px;}
+  .status-pill{ font-size:11.5px; padding:4px 11px; border-radius:20px; white-space:nowrap; border:1px solid transparent;}
+  .status-live{ background:#e3efe9; color:#286148; }
+  .status-dev{ background:#eef1f8; color:#3b4a73; }
+  .status-pilot{ background:#f7f1e2; color:#9c6b1f; }
+  .status-funding{ background:#f8ece9; color:#9e4b54; }
+  .status-paused{ background:#ececec; color:#666; }
+  .status-done{ background:#e8e6f2; color:#4a3f6e; }
+  .project .owner{ font-size:12px; color:var(--ink-soft); text-align:right; }
+  @media (max-width:700px){ .project .owner, .status-pill{ text-align:left; justify-self:start; } }
+
+  .table-scroll{ overflow-x:auto; -webkit-overflow-scrolling:touch; }
+
+  /* Registries / resources */
+  .reg-grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(260px,1fr)); gap:14px; margin-bottom:26px;}
+  .reg-card{ background:var(--panel); border:1px solid var(--line); padding:16px; border-radius:var(--radius);}
+  .reg-card .reg-owner{ font-size:11px; font-family:'IBM Plex Mono',monospace; color:var(--ink-soft); text-transform:uppercase;}
+  .reg-card h4{ font-size:15px; margin:6px 0 6px; font-family:'Source Serif 4',serif;}
+  .reg-card p{ font-size:12.5px; color:var(--ink-soft); margin:0 0 10px;}
+  .reg-card a.link{ font-size:12.5px; color:var(--seal-ink); text-decoration:none; border-bottom:1px solid var(--seal-ink); }
+
+  .doc-table{ width:100%; border-collapse:collapse; font-size:13px; }
+  .doc-table th{ text-align:left; font-size:11px; text-transform:uppercase; letter-spacing:.05em; color:var(--ink-soft); padding:8px 10px; border-bottom:1px solid var(--line); }
+  .doc-table td{ padding:9px 10px; border-bottom:1px solid var(--line-soft); vertical-align:top; }
+  .doc-table tr:hover td{ background:rgba(0,0,0,0.02); }
+  .code{ font-family:'IBM Plex Mono',monospace; font-size:12px; color:var(--seal-ink); }
+
+  /* Meetings / calendar */
+  .meeting-list{ display:flex; flex-direction:column; gap:0; border-top:1px solid var(--line); }
+  .meeting{ display:grid; grid-template-columns:110px 1fr auto; gap:16px; padding:14px 4px; border-bottom:1px solid var(--line-soft); align-items:start;}
+  @media (max-width:700px){ .meeting{ grid-template-columns:1fr; } }
+  .meeting .date{ font-family:'IBM Plex Mono',monospace; font-size:12.5px; color:var(--seal-ink); }
+  .meeting .mtitle{ font-family:'Source Serif 4',serif; font-size:15.5px; font-weight:600; }
+  .meeting .mdesc{ font-size:12.5px; color:var(--ink-soft); margin-top:3px; }
+  .meeting .tag{ font-size:10.5px; text-transform:uppercase; letter-spacing:.04em; color:var(--ink-soft); }
+  .meeting .attendees{ font-size:11.5px; color:var(--ink-soft); text-align:right; }
+  @media (max-width:700px){ .meeting .attendees{ text-align:left; } .meeting .date{ order:-1; } }
+
+  /* Buttons */
+  .btn{ display:inline-flex; align-items:center; gap:6px; background:var(--ink); color:var(--panel); border:none; padding:9px 16px; font-size:13px; border-radius:var(--radius); }
+  .btn:hover{ background:#000; }
+  .btn.ghost{ background:none; color:var(--ink); border:1px solid var(--line); }
+  .btn.ghost:hover{ background:rgba(0,0,0,0.04); }
+  .btn.small{ padding:5px 10px; font-size:12px; }
+  .actions-row{ display:flex; justify-content:flex-end; margin-bottom:14px; gap:8px; }
+
+  /* Modal */
+  .modal-bg{ position:fixed; inset:0; background:rgba(20,20,25,0.45); display:none; align-items:flex-start; justify-content:center; padding:60px 20px; z-index:50; overflow-y:auto;}
+  .modal-bg.open{ display:flex; }
+  .modal{ background:var(--panel); border:1px solid var(--line); max-width:460px; width:100%; padding:24px; border-radius:var(--radius); }
+  @media (max-width:600px){
+    .modal-bg{ padding:0; align-items:flex-end; }
+    .modal{ max-width:none; border-radius:0; max-height:92vh; overflow-y:auto; }
+    .modal-actions{ position:sticky; bottom:-24px; background:var(--panel); margin:20px -24px -24px; padding:14px 24px; border-top:1px solid var(--line-soft); }
+  }
+  .modal h3{ font-family:'Source Serif 4',serif; font-size:19px; margin:0 0 16px; }
+  .modal label{ display:block; font-size:12px; color:var(--ink-soft); margin:12px 0 4px; }
+  .modal input, .modal select, .modal textarea{
+    width:100%; padding:8px 10px; border:1px solid var(--line); font-family:inherit; font-size:16px; border-radius:var(--radius); background:#fff;
+  }
+  @media (min-width:601px){ .modal input, .modal select, .modal textarea{ font-size:13.5px; } }
+  .modal-actions{ display:flex; justify-content:flex-end; gap:10px; margin-top:20px; }
+
+  /* Mission / Why */
+  .pillars-flow{ display:flex; flex-direction:column; gap:10px; margin:20px 0 26px;}
+  .flow-step{ display:flex; gap:14px; align-items:flex-start; padding:12px 0; border-bottom:1px solid var(--line-soft); }
+  .flow-step .dot{ width:9px;height:9px;border-radius:50%; background:var(--pillar,#999); margin-top:6px; flex:none;}
+  .flow-step .ftitle{ font-family:'Source Serif 4',serif; font-weight:600; font-size:15px; }
+  .flow-step .fdesc{ font-size:13px; color:var(--ink-soft); margin-top:2px; max-width:600px;}
+
+  .priority-list{ counter-reset:pr; list-style:none; margin:0; padding:0; }
+  .priority-list li{ counter-increment:pr; display:flex; gap:14px; padding:12px 0; border-bottom:1px solid var(--line-soft); }
+  .priority-list li::before{ content:counter(pr,decimal-leading-zero); font-family:'IBM Plex Mono',monospace; color:var(--seal-ink); font-size:13px; padding-top:2px;}
+  .priority-list b{ font-family:'Source Serif 4',serif; font-weight:600; }
+  .priority-list .items{ font-size:12.5px; color:var(--ink-soft); margin-top:3px; }
+
+  /* Protocols / How */
+  .protocol-index{ list-style:none; margin:0; padding:0; border-top:1px solid var(--line); }
+  .protocol-index li{ display:flex; gap:14px; padding:10px 4px; border-bottom:1px solid var(--line-soft); align-items:baseline; font-size:13.5px;}
+  .protocol-index .pnum{ font-family:'IBM Plex Mono',monospace; color:var(--seal-ink); font-size:12.5px; width:24px; flex:none; }
+  .protocol-index .ptrack{ font-size:10.5px; text-transform:uppercase; color:var(--ink-soft); margin-left:auto; letter-spacing:.04em;}
+
+  .principle-box{ background:var(--panel); border:1px solid var(--line); border-left:4px solid var(--seal); padding:16px 20px; margin-bottom:20px; }
+  .principle-box .p-label{ font-size:11px; text-transform:uppercase; letter-spacing:.06em; color:var(--seal-ink); font-family:'IBM Plex Mono',monospace; }
+  .principle-box p{ margin:6px 0 0; font-family:'Source Serif 4',serif; font-size:16px; }
+
+  .empty-state{ padding:30px; text-align:center; color:var(--ink-soft); font-size:13.5px; border:1px dashed var(--line); border-radius:var(--radius); }
+  .footnote{ font-size:11.5px; color:var(--ink-soft); margin-top:30px; border-top:1px solid var(--line); padding-top:14px;}
+</style>
+</head>
+<body>
+
+<div class="shell">
+  <div class="topbar">
+    <div class="brand">
+      <div class="mark">W</div>
+      <div>
+        <h1>Womafreesm — Internal Team Hub</h1>
+        <div class="sub">One organization. One team. One source of truth.</div>
+      </div>
+    </div>
+    <div class="topbar-right">
+      <div class="search-box">
+        <input id="globalSearch" type="text" placeholder="Пошук: людина, проєкт, документ…">
+      </div>
+      <div class="clock" id="clockBox">—</div>
+    </div>
+  </div>
+
+  <nav class="rail">
+    <div class="rail-group-label">Знайти відповідь за 2–3 хв</div>
+    <div class="rail-scroll">
+      <button class="nav-item active" data-view="today"><span class="num">•</span> Сьогодні</button>
+      <button class="nav-item" data-view="who"><span class="num">01</span> Хто відповідає</button>
+      <button class="nav-item" data-view="what"><span class="num">02</span> Що ми робимо</button>
+      <button class="nav-item" data-view="where"><span class="num">03</span> Де знайти інформацію</button>
+      <button class="nav-item" data-view="when"><span class="num">04</span> Коли (дедлайни/зустрічі)</button>
+      <button class="nav-item" data-view="why"><span class="num">05</span> Навіщо ми це робимо</button>
+      <button class="nav-item" data-view="how"><span class="num">06</span> Як це робити</button>
+    </div>
+
+    <details class="rail-foot" open>
+      <summary>Посилання</summary>
+      <div class="links">
+        <a href="https://irr.womafreesm.com/" target="_blank" rel="noopener">↗ irr.womafreesm.com</a>
+        <a href="https://tally.so/r/xX4oXJ" target="_blank" rel="noopener">↗ Анкета для агентств</a>
+        <a href="https://www.instagram.com/womafreesm/" target="_blank" rel="noopener">↗ Instagram (EN)</a>
+        <a href="https://www.linkedin.com/company/womafreesm-world" target="_blank" rel="noopener">↗ LinkedIn</a>
+      </div>
+    </details>
+  </nav>
+
+  <main>
+    <div class="demo-banner">
+      <span>⚠</span>
+      <span><b>Дані.</b> Організаційна структура, ради, комітети, департаменти й напрями на цій сторінці — з робочого Org Chart v2.2 (травень 2025), наданого командою. Розділ «Додано вручну» — демонстраційні записи (позначені <span class="badge-demo" style="position:static;">DEMO</span>) для показу, як додаються нові люди/проєкти/зустрічі; вони зберігаються локально (localStorage) лише у вашому браузері. Структура даних (JS-об'єкти нижче) готова до підключення реальної CRM / бекенду без зміни розмітки.</span>
+    </div>
+
+    <!-- ===================== TODAY ===================== -->
+    <section class="view active" id="view-today">
+      <div class="view-head">
+        <div class="kicker">Знімок дня</div>
+        <h2>Доброго дня, команда Womafreesm</h2>
+        <p>Єдина система координації для дослідження, захисту, Асамблеї, WLCE та культурних проєктів.</p>
+      </div>
+
+      <div class="snapshot" id="snapshotRow"></div>
+
+      <div class="hero-grid">
+        <div class="card">
+          <h3>Місія</h3>
+          <div class="mission-tagline">Evidence data · Legal rapid response · Infrastructure</div>
+          <p class="mission-line">Чинити конструкцію світу, створюючи систему довіри та дій для жінок і майбутніх поколінь.</p>
+          <div class="chip-row" id="pillarChips"></div>
+          <div class="mission-syn">Синархат — спільне управління чоловічого та жіночого начала · Org Chart v2.2, травень 2025</div>
+        </div>
+        <div class="card">
+          <h3>Найближче в календарі</h3>
+          <div id="upcomingMeeting"></div>
+          <button class="btn ghost small" style="margin-top:12px;" onclick="switchView('when')">Весь календар →</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== WHO ===================== -->
+    <section class="view" id="view-who">
+      <div class="view-head">
+        <div class="kicker">01 · Хто</div>
+        <h2>Хто відповідає</h2>
+        <p>Організаційна структура Womafreesm — Org Chart v2.2 (травень 2025): від наглядового рівня до глобальної мережі країн і хабів.</p>
+      </div>
+
+      <div class="filter-row" id="layerFilters"></div>
+      <div class="flow-legend" id="flowLegend"></div>
+
+      <div id="orgLayers"></div>
+
+      <div class="layer-block" id="customTeamBlock">
+        <div class="layer-head"><h3>Додано вручну</h3><span class="lsub">(демонстраційні записи цього браузера)</span></div>
+        <div class="actions-row">
+          <button class="btn ghost small" onclick="openModal('person')">+ Додати людину</button>
+        </div>
+        <div class="team-grid" id="teamGrid"></div>
+      </div>
+    </section>
+
+    <!-- ===================== WHAT ===================== -->
+    <section class="view" id="view-what">
+      <div class="view-head">
+        <div class="kicker">02 · Що</div>
+        <h2>Що ми робимо</h2>
+        <p>Сім напрямів Womafreesm. Кожен проєкт має власний статус — за принципом публічної підзвітності (Стратегічний план, розділ 23). Позначкою відзначено флагманські проєкти з Org Chart v2.2.</p>
+      </div>
+      <div class="filter-row" id="statusFilters"></div>
+      <div class="actions-row">
+        <button class="btn ghost small" onclick="openModal('project')">+ Додати проєкт</button>
+      </div>
+      <div class="project-list" id="projectList"></div>
+    </section>
+
+    <!-- ===================== WHERE ===================== -->
+    <section class="view" id="view-where">
+      <div class="view-head">
+        <div class="kicker">03 · Де</div>
+        <h2>Де знайти інформацію</h2>
+        <p>Сім обов'язкових операційних систем Асамблеї та ключові документи проєкту. Принцип: Documentation Before Memory.</p>
+      </div>
+      <div class="reg-grid" id="registryGrid"></div>
+
+      <h3 style="font-size:14px;text-transform:uppercase;letter-spacing:.04em;color:var(--ink-soft);margin:26px 0 10px;">Реєстр установчих документів</h3>
+      <div class="table-scroll">
+        <table class="doc-table" id="docTable">
+          <thead><tr><th>Код</th><th>Документ</th><th>Розділ</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+
+      <h3 style="font-size:14px;text-transform:uppercase;letter-spacing:.04em;color:var(--ink-soft);margin:26px 0 6px;">Відповідність і комплаєнс</h3>
+      <div class="compliance-row" id="complianceRow"></div>
+    </section>
+
+    <!-- ===================== WHEN ===================== -->
+    <section class="view" id="view-when">
+      <div class="view-head">
+        <div class="kicker">04 · Коли</div>
+        <h2>Дедлайни та зустрічі</h2>
+        <p>Ритм координації: щомісячне публічне оновлення, засідання Ради директорів, робочі групи Асамблеї.</p>
+      </div>
+      <div class="actions-row">
+        <button class="btn ghost small" onclick="openModal('meeting')">+ Додати зустріч</button>
+      </div>
+      <div class="meeting-list" id="meetingList"></div>
+    </section>
+
+    <!-- ===================== WHY ===================== -->
+    <section class="view" id="view-why">
+      <div class="view-head">
+        <div class="kicker">05 · Навіщо</div>
+        <h2>Навіщо ми це робимо</h2>
+        <p>Єдина логіка Womafreesm: від особистого досвіду жінки — до даних, від даних — до захисту, від захисту — до стандартів і культурних змін.</p>
+      </div>
+
+      <div class="pillars-flow" id="logicFlow"></div>
+
+      <h3 style="font-size:14px;text-transform:uppercase;letter-spacing:.04em;color:var(--ink-soft);margin:30px 0 6px;">Стратегічні пріоритети (у порядку черговості)</h3>
+      <ul class="priority-list" id="priorityList"></ul>
+
+      <h3 style="font-size:14px;text-transform:uppercase;letter-spacing:.04em;color:var(--ink-soft);margin:30px 0 10px;">Ключові принципи</h3>
+      <div class="chip-row" id="principlesRow"></div>
+    </section>
+
+    <!-- ===================== HOW ===================== -->
+    <section class="view" id="view-how">
+      <div class="view-head">
+        <div class="kicker">06 · Як</div>
+        <h2>Як це робити</h2>
+        <p>Шість дверей участі, операційний принцип і покроковий шлях документів, що регулюють роботу Асамблеї та партнерств.</p>
+      </div>
+
+      <h3 style="font-size:14px;text-transform:uppercase;letter-spacing:.04em;color:var(--ink-soft);margin:0 0 10px;">6 дверей участі</h3>
+      <div class="doors-grid" id="doorsGrid"></div>
+
+      <div class="principle-box">
+        <div class="p-label">Операційний принцип · Стаття II</div>
+        <p>Documentation Before Memory — жодний критично важливий процес не залежить лише від пам'яті однієї людини. Усі рішення, статуси, кейси й партнерства фіксуються в офіційних системах обліку.</p>
+      </div>
+
+      <h3 style="font-size:14px;text-transform:uppercase;letter-spacing:.04em;color:var(--ink-soft);margin:22px 0 6px;">Протоколи та операційні документи</h3>
+      <ul class="protocol-index" id="protocolIndex"></ul>
+    </section>
+
+    <div class="footnote">Womafreesm — World Organization of Women Nations · Internal Team Hub · Org Chart v2.2, травень 2025 · дані оновлюються локально (localStorage) у цьому браузері</div>
+  </main>
+</div>
+
+
+<!-- ===================== MODALS ===================== -->
+<div class="modal-bg" id="modalBg">
+  <div class="modal" id="modalBody"></div>
+</div>
+
+<script>
+/* =========================================================================
+   DATA LAYER
+   Усі дані нижче — прості JS/JSON-об'єкти. Замінити на реальні дані можна,
+   підмінивши вміст масивів (наприклад, підключивши fetch до реального API/CRM)
+   без зміни розмітки чи логіки рендерингу.
+   ========================================================================= */
+
+const PILLARS = {
+  research:  { key:"research",  label:"Дослідження (45–64)",           color:"var(--accent-research)" },
+  pathway:   { key:"pathway",   label:"Women's Protection Pathway",     color:"var(--accent-pathway)" },
+  assembly:  { key:"assembly",  label:"World Women's Assembly",         color:"var(--accent-assembly)" },
+  wlce:      { key:"wlce",      label:"WLCE Index",                     color:"var(--accent-wlce)" },
+  spirit:    { key:"spirit",    label:"Духовна коаліція / Хартія",      color:"var(--accent-spirit)" },
+  culture:   { key:"culture",   label:"«Вне конкуренции» / FreeWoman",  color:"var(--accent-culture)" },
+  reading:   { key:"reading",   label:"Womafreesm Reading Order",       color:"var(--accent-reading)" }
+};
+
+const STATUS = {
+  live:    { label:"Запущено",              cls:"status-live" },
+  dev:     { label:"У розробці",            cls:"status-dev" },
+  pilot:   { label:"Пілот",                 cls:"status-pilot" },
+  funding: { label:"Залежить від фінансування", cls:"status-funding" },
+  paused:  { label:"Призупинено",           cls:"status-paused" },
+  done:    { label:"Завершено",             cls:"status-done" }
+};
+
+// ---- ORG CHART v2.2 (травень 2025) — надано командою, реальна структура ----
+const ORG_META = {
+  version: "Org Chart v2.2 · Травень 2025",
+  tagline: "Evidence data · Legal rapid response · Infrastructure",
+  synarchy: "Синархат — спільне управління чоловічого та жіночого начала"
+};
+
+const BOARD = [
+  { name:"Iryna Iozhytsia", role:"Board Chair", ua:"Голова Ради директорів" },
+  { name:"Marina Sukhomlinova", role:"Director", ua:"Директорка" },
+  { name:"Oksana Krasnova", role:"Treasurer", ua:"Скарбниця" },
+  { name:"Alina Shonina", role:"Secretary", ua:"Секретарка" },
+  { name:"Vita Bondarenko", role:"Director", ua:"Директорка" }
+];
+
+const CONTROLLING_BODIES = [
+  { name:"Ethics & Charter Committee", ua:"Етичний комітет: хартія, цінності, публічна адвокація" },
+  { name:"Audit & Transparency Board", ua:"Аудиторська і прозора рада: фінансовий аудит, квартальні звіти" },
+  { name:"Risk & Security Council", ua:"Рада з ризиків і безпеки: управління ризиками, кризове управління" },
+  { name:"Data Governance Council", ua:"Рада з управління даними: етика даних, DPIA, методологія, надійність" },
+  { name:"Legal & Compliance Committee", ua:"Юридичний і комплаєнс комітет: захист, санкції, регуляторні ризики" }
+];
+
+const EXECUTIVE_CORE = [
+  { name:"Iryna Lutsenko", role:"CEO", ua:"Генеральна директорка", photo:"data:image/jpeg;base64,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" },
+  { name:"Marina Sukhomlinova", role:"Founder", ua:"Засновниця · Лідерка бачення" },
+  { name:"Oksana Krasnova", role:"COO / Integrator", ua:"Операційна директорка · Керівниця апарату (Chief of Staff)" },
+  { name:"Vita Bondarenko", role:"Director of Partnerships & Strategic Development (DPSD)", ua:"Директорка з партнерств і стратегічного розвитку" },
+  { name:"Alina Shonina", role:"Chief Creative & Narrative Director", ua:"Креативна директорка з наративу" }
+];
+
+const INFRA_DEPARTMENTS = [
+  { name:"IT & Digital Infrastructure Department", ua:"ІТ та цифрова інфраструктура", head:"Андрій", assigned:true,
+    functions:["CRM & Automation","Data Architecture","Member Systems","Research Systems","Analytics","AI & Automation","Volunteer Systems"] },
+  { name:"Cyber Security & Digital Protection Department", ua:"Кібербезпека та цифровий захист", head:"Spencer Scott", assigned:true,
+    functions:["SOC & Threat Monitoring","Incident Response","Infrastructure Security","Secure Communication","Privacy-by-Design","Risk & Vulnerability Management","Data Protection Controls","Crisis & Breach Protocols"] },
+  { name:"Data Analytics & Research Department", ua:"Аналітика даних і дослідження", head:"(призначається)", assigned:false,
+    functions:["Women's Life-Cycle Economy Index","Research & Surveys","Data Collection","Meta-Analysis & Insights","Evidence Reports","Policy Briefs","Data Visualization","Data Insights"] },
+  { name:"Data Protection & Research Ethics Office", ua:"Офіс захисту даних і дослідницької етики", head:"(призначається)", assigned:false,
+    functions:["GDPR / UK GDPR Compliance","DPIA","Consent Management","Anonymization & Minimization","Ethics Review Board Support","Data Governance Policies","Research Ethics","University Compliance"] }
+];
+
+const OPERATIONAL_DEPARTMENTS = [
+  { name:"Finance & Procurement Department", ua:"Фінансовий департамент", head:"(не призначено)", assigned:false,
+    functions:["Budgeting","Accounting","Cash Management","Donor Finance","Audit & Reporting","Procurement","Vendor Management","Tenders & Bids","Contract Management","Logistics & Supplies","Compliance & Due Diligence"] },
+  { name:"Fundraising Department", ua:"Фандрейзинговий департамент", head:"(призначається)", assigned:false,
+    functions:["Individual Donors","Corporate Partnerships","Major Donor Relations","Fundraising Strategy","Fundraising Events & Galas","Grant Writing Support"] },
+  { name:"Grants Department", ua:"Грантовий департамент", head:"(призначається)", assigned:false,
+    functions:["Grant Strategy","Grant Writing","Institutional Partnerships","Grant Compliance","Reporting to Donors","Grant Portfolio Management"] },
+  { name:"Legal Rapid Response Department", ua:"Юридичний департамент швидкого реагування", head:"(призначається)", assigned:false,
+    functions:["Case Intake & Verification","Referral & Partner Network","International Legal Support","Protection & Safety Protocols","Impact Litigation","Pro Bono Network"] },
+  { name:"Communications & Transparency Department", ua:"Комунікації та прозорість", head:"(призначається)", assigned:false,
+    functions:["Public Transparency","Press Office","Media Relations","Crisis Communications","Fact-check Unit","Regulation Monitoring","Public Narrative","Reports & Impact","PR Events & Public Engagement"] },
+  { name:"Marketing & Growth Department", ua:"Маркетинг і зростання", head:"(призначається)", assigned:false,
+    functions:["Marketing Strategy","Brand Positioning","Campaign Management","Digital Marketing","SEO & Content Marketing","Email & Lifecycle Marketing","Analytics & Growth","Membership Growth","Conversion Optimization"] },
+  { name:"Chief Creative Narrative Office", ua:"Креативний офіс і наратив", head:"Alina Shonina", assigned:true,
+    functions:["Visual Identity & Design","Brand Identity","Graphic Design","UI/UX Design","Presentation & Slides","Infographics & Motion Design","Narrative & Storytelling","Messaging","Storytelling","Scripts & Films","Manifest & Values Language","Campaign Narratives","Editing & Post-production"] },
+  { name:"Volunteer & Community Department", ua:"Волонтери та спільноти", head:"Oksana Chukin", assigned:true,
+    functions:["Volunteer Guild","Onboarding & Training","Task & Project Management","Engagement & Retention","Community Circles","Local Volunteer Networks","Recognition System"] },
+  { name:"People & Culture Department", ua:"Люди і культура", head:"(призначається)", assigned:false,
+    functions:["HR & People Operations","HR Policies & Handbook","Recruitment","Onboarding","Training & Development","Culture & Values","Wellbeing & Support"] }
+];
+
+const GLOBAL_STRUCTURE = {
+  hq: "Global HQ (London) · Глобальний штаб (Лондон)",
+  regions: ["Europe / Європа","North America / Північна Америка","LATAM / Лат. Америка","MENA / Близький Схід","Africa / Африка","Asia-Pacific / Азія-Тихоокеанський регіон"],
+  levels: [
+    "Regional Directors / Регіональні директори",
+    "Country Directors / Директори країн",
+    "City / Hub Coordinators / Міські координатори · Хаби",
+    "Community Circles & Members / Спільноти та учасниці"
+  ]
+};
+
+const KEY_FLOWS = [
+  { sym:"—", label:"Пряме підпорядкування / служить" },
+  { sym:"⇄", label:"Координація / спільна робота" },
+  { sym:"↔", label:"Операційна взаємодія" },
+  { sym:"⇌", label:"Інформаційний обмін" },
+  { sym:"⇢", label:"Нагляд / управління" }
+];
+
+const KEY_PRINCIPLES = [
+  "Непартійність і незалежність","Прозорість і підзвітність","Privacy-by-default",
+  "Доказовість і дані","Етика і добросовісність","Безпека учасниць",
+  "Інклюзивність і різноманіття","Стійкість і ефективність"
+];
+
+const PARTICIPATION_DOORS = [
+  { icon:"🎗", title:"Пожертвування", tag:"Donor" },
+  { icon:"🤝", title:"Волонтерство", tag:"Volunteer Guild" },
+  { icon:"🪪", title:"Членство", tag:"Member" },
+  { icon:"🔎", title:"Дослідження", tag:"Research" },
+  { icon:"⭐", title:"Проєкти", tag:"Projects" },
+  { icon:"🏛", title:"Партнерство", tag:"Media & Org" }
+];
+
+const FLAGSHIP_TITLES = [
+  "Women's Life-Cycle Economy Index",
+  "Legal Rapid Response System",
+  "World Women's Assembly",
+  "«Вне конкуренции» / FreeWoman",
+  "Women's Protection Pathway"
+];
+
+const COMPLIANCE_BADGES = [
+  "GDPR / UK GDPR","DPIA","Санкційний скринінг (UK/EU/OFAC)","Overhead Cap 20% (щоквартально)",
+  "Щомісячні звіти","Непартійна хартія","Legal Shielding & Privacy-by-Design"
+];
+
+// ---- Manually-added team members (customTeam) — always DEMO, added via "+ Додати людину" ----
+const DEFAULT_CUSTOM_TEAM = [];
+
+// ---- PROJECTS (7 pillars per "Единая логика Womafreesm"; flagship = named in Org Chart v2.2; statuses are illustrative/DEMO) ----
+const DEFAULT_PROJECTS = [
+  { title:"Дослідження жінок 45–64", pillar:"research", status:"pilot", desc:"Порівняльне дослідження в 5 країнах (UK, DE, PL, UA, ES): як ринок і AI занижують релевантність зрілої жінки.", owner:"Data Analytics & Research Department", demo:true, flagship:false },
+  { title:"Women's Protection Pathway", pillar:"pathway", status:"pilot", desc:"Маршрут допомоги конкретній жінці: перша розмова, карта ризиків, карта партнерів по Україні.", owner:"Legal Rapid Response Department", demo:true, flagship:true },
+  { title:"World Women's Assembly", pillar:"assembly", status:"dev", desc:"Перехід окремих кейсів у міжнародну інституційну дію: Хартія, ради, протоколи, робочі групи.", owner:"Director of Partnerships & Strategic Development", demo:true, flagship:true },
+  { title:"Women's Life-Cycle Economy Index", pillar:"wlce", status:"funding", desc:"Перетворення жіночого досвіду на дані й стандарти. Перший пілот: 10 країн, 15 мов.", owner:"Data Analytics & Research Department", demo:true, flagship:true },
+  { title:"Міжнародна духовна коаліція та Хартія", pillar:"spirit", status:"dev", desc:"Моральне підґрунтя нової цивілізаційної моделі; перше коло духовних підписантів.", owner:"CEO / Founder", demo:true, flagship:false },
+  { title:"«Вне конкуренции» / FreeWoman", pillar:"culture", status:"dev", desc:"Зміна культурних норм щодо віку, тіла, сили й цінності жінки.", owner:"Chief Creative Narrative Office", demo:true, flagship:true },
+  { title:"Womafreesm Reading Order", pillar:"reading", status:"paused", desc:"Міжнародна інтелектуальна спільнота жінок, що творять і поширюють нові сенси.", owner:"—", demo:true, flagship:false }
+];
+
+// ---- MEETINGS (illustrative cadence; "Перша Офіційна Зустріч" reflects a real project document) ----
+const DEFAULT_MEETINGS = [
+  { date:"2026-09-01", title:"Перша Офіційна Зустріч", desc:"Установча координаційна зустріч команди — старт операційного циклу.", tag:"Установча", attendees:"CEO + директори", demo:true },
+  { date:"2026-09-08", title:"Засідання Ради директорів", desc:"Огляд бюджету, ключових політик і статусів проєктів.", tag:"Governance", attendees:"Board", demo:true },
+  { date:"2026-09-15", title:"Щомісячне публічне оновлення", desc:"Стаття 23: статус проєктів, витрати, затримки й причини, наступний етап.", tag:"Прозорість", attendees:"Комунікації", demo:true },
+  { date:"2026-09-22", title:"Робоча група Асамблеї · Pathway", desc:"Огляд перших звернень і маршрутизації по Україні.", tag:"Асамблея", attendees:"Case Intake + Legal", demo:true }
+];
+
+// ---- REGISTRIES (7 mandatory operating systems, Ops Manual Art. IV — first 5 documented explicitly) ----
+const REGISTRIES = [
+  { owner:"Case Intake Coordinator", name:"Case Registry", desc:"Усі кейси зі статусами." },
+  { owner:"Partnership Coordinator", name:"Partner Registry", desc:"Усі партнерські організації зі статусами." },
+  { owner:"Research Coordinator", name:"Expert Registry", desc:"Усі зареєстровані експерти." },
+  { owner:"Operations Manager", name:"Project Registry", desc:"Усі активні проєкти з відповідальними й термінами." },
+  { owner:"Global Response Director", name:"Action Registry", desc:"Усі поточні дії реагування, прив'язані до кейсів." },
+  { owner:"Communications Coordinator", name:"Публічний реєстр результатів", desc:"Публічна панель результатів і прозорості (Стратегічний план, п.23)." }
+];
+
+// ---- KEY DOCUMENTS (subset of source-of-truth list, for quick reference) ----
+const DOC_TABLE = [
+  { code:"01", name:"Учредительная Хартия Assembly", section:"Governance" },
+  { code:"02", name:"Учредительная партнёрская структура", section:"Партнерства" },
+  { code:"03", name:"Кодекс этики и политика конфликта интересов", section:"Етика" },
+  { code:"07", name:"Протокол допуска партнёров", section:"Партнерства" },
+  { code:"08", name:"Протокол приёма кейсов", section:"Кейси" },
+  { code:"09", name:"Протокол юридического быстрого реагирования (LRR)", section:"Юридичний" },
+  { code:"10", name:"Протокол доказательств и данных", section:"Дослідження" },
+  { code:"11", name:"Операционный мануал Ассамблеи", section:"Операції" },
+  { code:"12", name:"Структура конфиденциальности и согласия", section:"Дані/GDPR" },
+  { code:"13", name:"Протокол публичных коммуникаций и медиа", section:"Комунікації" },
+  { code:"14", name:"Роли Assembly", section:"Ролі" },
+  { code:"16/17", name:"Путь партнёрства (+ схема по шагам)", section:"Партнерства" }
+];
+
+// ---- WHY / LOGIC FLOW ----
+const LOGIC_FLOW = [
+  { pillar:"research", title:"Womafreesm досліджує системну помилку", desc:"Виявляємо, де й чому жіночий досвід випадає з розрахунку ринку та AI." },
+  { pillar:"pathway", title:"Women's Protection Pathway створює маршрут допомоги конкретній жінці", desc:"Від першого звернення до безпечної координованої підтримки." },
+  { pillar:"assembly", title:"World Women's Assembly перетворює кейси на інституційну дію", desc:"Окремі історії стають міжнародною координацією та рішеннями." },
+  { pillar:"wlce", title:"WLCE перетворює жіночий досвід на дані й стандарти", desc:"Індекс життєвого циклу — вимірна основа для політик і практик." },
+  { pillar:"spirit", title:"Духовна коаліція і Хартія створюють моральне підґрунтя", desc:"Нова цивілізаційна модель, що визнає цінність жіночого досвіду." },
+  { pillar:"culture", title:"«Вне конкуренции» і FreeWoman змінюють культурні норми", desc:"Вік, тіло, сила й цінність жінки — без застарілих стереотипів." },
+  { pillar:"reading", title:"Womafreesm Reading Order формує інтелектуальну спільноту", desc:"Жінки, здатні творити й поширювати нові сенси у світі." }
+];
+
+const PRIORITIES = [
+  { title:"Інституційна стійкість", items:"система управління · фінанси · цифрова інфраструктура · захист даних · команда · прозорість · фандрейзинг" },
+  { title:"Доказовий результат", items:"завершення дослідження 45–64 · публікація методології · довіра до дослідницької спроможності" },
+  { title:"Підготовка глобального WLCE", items:"дослідницькі ради · методологія · етика · платформа · партнерства · фінансування першого етапу" },
+  { title:"Практичний захист", items:"запуск Pathway в Україні · партнерська карта · протокол першої відповіді · Legal Rapid Response" },
+  { title:"Міжнародна інституційна координація", items:"розвиток Assembly · експертні мережі · систематизація кейсів · робочі групи" },
+  { title:"Культурна й духовна трансформація", items:"«Вне конкуренции» · FreeWoman · духовна коаліція · Хартія · Reading Order" }
+];
+
+// ---- PROTOCOLS INDEX (How) ----
+const PROTOCOLS = [
+  { num:"01", name:"Учредительная Хартия Assembly", track:"Governance" },
+  { num:"02", name:"Учредительная партнёрская структура", track:"Партнерства" },
+  { num:"03", name:"Кодекс этики и политика конфликта интересов", track:"Етика" },
+  { num:"04", name:"Форма заявки на партнёрство", track:"Партнерства" },
+  { num:"05", name:"Форма подачи кейса", track:"Кейси" },
+  { num:"06", name:"Форма регистрации в экспертную сеть", track:"Дослідження" },
+  { num:"07", name:"Протокол допуска партнёров", track:"Партнерства" },
+  { num:"08", name:"Протокол приёма кейсов", track:"Кейси" },
+  { num:"09", name:"Протокол юридического быстрого реагирования", track:"Юридичний" },
+  { num:"10", name:"Протокол доказательств и данных", track:"Дослідження" },
+  { num:"11", name:"Операционный мануал Ассамблеи", track:"Операції" },
+  { num:"12", name:"Структура конфиденциальности и согласия", track:"Дані/GDPR" },
+  { num:"13", name:"Протокол публичных коммуникаций и медиа", track:"Комунікації" },
+  { num:"14", name:"Роли Assembly", track:"Ролі" },
+  { num:"15", name:"Structure Assembly v2", track:"Governance" },
+  { num:"16", name:"Путь партнёрства", track:"Партнерства" },
+  { num:"17", name:"Путь партнёрства — схема по шагам", track:"Партнерства" }
+];
+
+/* =========================================================================
+   STATE (localStorage-backed, falls back to defaults)
+   ========================================================================= */
+function loadState(key, fallback){
+  try{
+    const raw = localStorage.getItem(key);
+    if(!raw) return JSON.parse(JSON.stringify(fallback));
+    return JSON.parse(raw);
+  }catch(e){ return JSON.parse(JSON.stringify(fallback)); }
+}
+function saveState(key, value){
+  try{ localStorage.setItem(key, JSON.stringify(value)); }catch(e){ /* storage unavailable */ }
+}
+
+let team = loadState('wf_team', DEFAULT_CUSTOM_TEAM);
+let projects = loadState('wf_projects', DEFAULT_PROJECTS);
+let meetings = loadState('wf_meetings', DEFAULT_MEETINGS);
+
+let layerFilter = 'all';
+let statusFilter = 'all';
+
+/* =========================================================================
+   NAV
+   ========================================================================= */
+function switchView(view){
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(b=>b.classList.remove('active'));
+  document.getElementById('view-'+view).classList.add('active');
+  document.querySelector('.nav-item[data-view="'+view+'"]').classList.add('active');
+}
+document.querySelectorAll('.nav-item').forEach(btn=>{
+  btn.addEventListener('click', ()=>switchView(btn.dataset.view));
+});
+
+/* =========================================================================
+   CLOCK
+   ========================================================================= */
+function tickClock(){
+  const now = new Date();
+  const opts = { weekday:'long', year:'numeric', month:'long', day:'numeric' };
+  const dateStr = now.toLocaleDateString('uk-UA', opts);
+  const timeStr = now.toLocaleTimeString('uk-UA', {hour:'2-digit', minute:'2-digit'});
+  document.getElementById('clockBox').innerHTML = dateStr + '<br>' + timeStr;
+}
+tickClock(); setInterval(tickClock, 30000);
+
+/* =========================================================================
+   RENDER: TODAY
+   ========================================================================= */
+function renderToday(){
+  const liveCount = projects.filter(p=>p.status==='live'||p.status==='pilot').length;
+  const teamCount = team.length;
+  const upcoming = [...meetings].filter(m=>new Date(m.date) >= new Date('2026-08-31')).sort((a,b)=>new Date(a.date)-new Date(b.date));
+  const nextMeeting = upcoming[0];
+
+  document.getElementById('snapshotRow').innerHTML = `
+    <div class="cell"><div class="num">${projects.length}</div><div class="label">активних напрямів</div></div>
+    <div class="cell"><div class="num">${teamCount}</div><div class="label">ролей у команді</div></div>
+    <div class="cell"><div class="num">${liveCount}</div><div class="label">у пілоті / запущено</div></div>
+    <div class="cell"><div class="num">${upcoming.length}</div><div class="label">подій попереду</div></div>
+  `;
+
+  document.getElementById('pillarChips').innerHTML = Object.values(PILLARS).map(p=>
+    `<span class="chip" style="border-color:${p.color};color:${p.color};">${p.label}</span>`
+  ).join('');
+
+  document.getElementById('upcomingMeeting').innerHTML = nextMeeting ? `
+    <div class="date mono" style="color:var(--seal-ink);font-size:12.5px;">${formatDate(nextMeeting.date)}</div>
+    <div style="font-family:'Source Serif 4',serif;font-weight:600;font-size:15.5px;margin-top:3px;">${nextMeeting.title}</div>
+    <div style="font-size:12.5px;color:var(--ink-soft);margin-top:3px;">${nextMeeting.desc}</div>
+  ` : `<div class="empty-state">Немає запланованих подій</div>`;
+}
+
+function formatDate(iso){
+  const d = new Date(iso);
+  return d.toLocaleDateString('uk-UA', {day:'numeric', month:'long', year:'numeric'});
+}
+
+/* =========================================================================
+   RENDER: WHO (org chart v2.2)
+   ========================================================================= */
+const ORG_LAYER_DEFS = [
+  { key:"governance", num:"1", label:"Governance Layer", ua:"Нагляд і легітимність" },
+  { key:"executive",  num:"2", label:"Executive Core", ua:"Виконавче ядро" },
+  { key:"infra",       num:"3", label:"Critical Infrastructure Layer", ua:"Інфраструктурний рівень" },
+  { key:"operational", num:"4", label:"Core Operational Departments", ua:"Операційні департаменти" },
+  { key:"global",      num:"5", label:"Global Structure", ua:"Глобальна структура" }
+];
+
+function renderLayerFilters(){
+  const opts = ['all', ...ORG_LAYER_DEFS.map(l=>l.key)];
+  document.getElementById('layerFilters').innerHTML = opts.map(k=>{
+    const def = ORG_LAYER_DEFS.find(l=>l.key===k);
+    return `<button class="${k===layerFilter?'active':''}" data-l="${k}">${k==='all'?'Усі рівні':def.num+' · '+def.ua}</button>`;
+  }).join('');
+  document.querySelectorAll('#layerFilters button').forEach(b=>{
+    b.addEventListener('click', ()=>{ layerFilter=b.dataset.l; renderLayerFilters(); renderOrgChart(); });
+  });
+}
+
+function renderFlowLegend(){
+  document.getElementById('flowLegend').innerHTML = KEY_FLOWS.map(f=>
+    `<span class="fitem"><span class="fsym">${f.sym}</span>${f.label}</span>`
+  ).join('');
+}
+
+function personCard(p){
+  const header = p.photo
+    ? `<div class="phead"><img class="photo" src="${p.photo}" alt="${p.name}"><div><div class="role" style="margin-bottom:2px;">${p.role}</div><div class="name" style="margin-bottom:0;">${p.name}</div></div></div>`
+    : `<div class="role">${p.role}</div><div class="name">${p.name}</div>`;
+  return `<div class="person">
+    ${header}
+    <div class="scope">${p.ua||''}</div>
+  </div>`;
+}
+
+function deptCard(d){
+  return `<div class="dept-card">
+    <div class="dname">${d.name}</div>
+    <div class="dua">${d.ua}</div>
+    <div class="dhead ${d.assigned?'':'unassigned'}">Керівник(ця): ${d.head}</div>
+    <div class="func-chip-row">${d.functions.map(f=>`<span class="func-chip">${f}</span>`).join('')}</div>
+  </div>`;
+}
+
+function renderOrgChart(){
+  const show = k => layerFilter==='all' || layerFilter===k;
+  const blocks = [];
+
+  if(show('governance')){
+    blocks.push(`
+    <div class="layer-block">
+      <div class="layer-head"><span class="lnum">1</span><h3>Governance Layer</h3><span class="lsub">— нагляд і легітимність</span></div>
+      <div class="team-grid">${BOARD.map(personCard).join('')}</div>
+      <h4 style="font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:var(--ink-soft);margin:18px 0 0;">Controlling bodies / Контролюючі органи</h4>
+      <div class="committee-grid">${CONTROLLING_BODIES.map(c=>`
+        <div class="committee-card"><div class="cname">${c.name}</div><div class="cdesc">${c.ua}</div></div>
+      `).join('')}</div>
+    </div>`);
+  }
+
+  if(show('executive')){
+    blocks.push(`
+    <div class="layer-block">
+      <div class="layer-head"><span class="lnum">2</span><h3>Executive Core</h3><span class="lsub">— виконавче ядро</span></div>
+      <div class="team-grid">${EXECUTIVE_CORE.map(personCard).join('')}</div>
+    </div>`);
+  }
+
+  if(show('infra')){
+    blocks.push(`
+    <div class="layer-block">
+      <div class="layer-head"><span class="lnum">3</span><h3>Critical Infrastructure Layer</h3><span class="lsub">— інфраструктурний рівень</span></div>
+      <div class="dept-grid">${INFRA_DEPARTMENTS.map(deptCard).join('')}</div>
+    </div>`);
+  }
+
+  if(show('operational')){
+    blocks.push(`
+    <div class="layer-block">
+      <div class="layer-head"><span class="lnum">4</span><h3>Core Operational Departments</h3><span class="lsub">— операційні департаменти</span></div>
+      <div class="dept-grid">${OPERATIONAL_DEPARTMENTS.map(deptCard).join('')}</div>
+    </div>`);
+  }
+
+  if(show('global')){
+    blocks.push(`
+    <div class="layer-block">
+      <div class="layer-head"><span class="lnum">5</span><h3>Global Structure</h3><span class="lsub">— глобальна структура</span></div>
+      <div class="card" style="margin-bottom:14px;"><strong>${GLOBAL_STRUCTURE.hq}</strong></div>
+      <div class="global-strip">${GLOBAL_STRUCTURE.regions.map(r=>`<span class="region-chip">${r}</span>`).join('')}</div>
+      <ul class="global-levels">${GLOBAL_STRUCTURE.levels.map((l,i)=>`<li><span class="arrow">${i===0?'⇢':'↳'}</span>${l}</li>`).join('')}</ul>
+    </div>`);
+  }
+
+  document.getElementById('orgLayers').innerHTML = blocks.join('') || `<div class="empty-state">Немає даних для цього рівня</div>`;
+}
+
+function renderTeam(){
+  document.getElementById('teamGrid').innerHTML = team.length ? team.map(p=>`
+    <div class="person">
+      <span class="badge-demo">DEMO</span>
+      <div class="role">${p.role}</div>
+      <div class="name">${p.name}</div>
+      <div class="scope">${p.scope}</div>
+      <div class="meta"><span>${p.region}</span><span>${p.group}</span></div>
+    </div>
+  `).join('') : `<div class="empty-state">Ще ніхто не доданий вручну — натисніть «+ Додати людину»</div>`;
+}
+
+/* =========================================================================
+   RENDER: WHAT (projects)
+   ========================================================================= */
+function renderStatusFilters(){
+  const opts = ['all', ...Object.keys(STATUS)];
+  document.getElementById('statusFilters').innerHTML = opts.map(s=>
+    `<button class="${s===statusFilter?'active':''}" data-s="${s}">${s==='all'?'Усі статуси':STATUS[s].label}</button>`
+  ).join('');
+  document.querySelectorAll('#statusFilters button').forEach(b=>{
+    b.addEventListener('click', ()=>{ statusFilter=b.dataset.s; renderStatusFilters(); renderProjects(); });
+  });
+}
+
+function renderProjects(){
+  const list = statusFilter==='all' ? projects : projects.filter(p=>p.status===statusFilter);
+  document.getElementById('projectList').innerHTML = list.length ? list.map(p=>{
+    const pillar = PILLARS[p.pillar] || {label:p.pillar, color:'#999'};
+    const st = STATUS[p.status] || {label:p.status, cls:''};
+    return `
+    <div class="project" style="--pillar:${pillar.color}">
+      <div>
+        <div class="title">${p.title}${p.flagship?'<span class="flagship-badge">★ Флагман</span>':''} ${p.demo?'<span class="badge-demo" style="position:static;margin-left:6px;">DEMO</span>':''}</div>
+        <div class="pillar-tag">${pillar.label}</div>
+        <div class="desc">${p.desc}</div>
+      </div>
+      <span class="status-pill ${st.cls}">${st.label}</span>
+      <div class="owner">Відповідальний(а):<br>${p.owner}</div>
+    </div>`;
+  }).join('') : `<div class="empty-state">Немає проєктів із цим статусом</div>`;
+}
+
+/* =========================================================================
+   RENDER: WHERE (registries + docs)
+   ========================================================================= */
+function renderRegistries(){
+  document.getElementById('registryGrid').innerHTML = REGISTRIES.map(r=>`
+    <div class="reg-card">
+      <div class="reg-owner">${r.owner}</div>
+      <h4>${r.name}</h4>
+      <p>${r.desc}</p>
+    </div>
+  `).join('');
+
+  document.querySelector('#docTable tbody').innerHTML = DOC_TABLE.map(d=>`
+    <tr><td class="code">${d.code}</td><td>${d.name}</td><td>${d.section}</td></tr>
+  `).join('');
+
+  document.getElementById('complianceRow').innerHTML = COMPLIANCE_BADGES.map(c=>
+    `<span class="citem">${c}</span>`
+  ).join('');
+}
+
+/* =========================================================================
+   RENDER: WHEN (meetings)
+   ========================================================================= */
+function renderMeetings(){
+  const sorted = [...meetings].sort((a,b)=>new Date(a.date)-new Date(b.date));
+  document.getElementById('meetingList').innerHTML = sorted.length ? sorted.map(m=>`
+    <div class="meeting">
+      <div class="date">${formatDate(m.date)}</div>
+      <div>
+        <div class="mtitle">${m.title} ${m.demo?'<span class="badge-demo" style="position:static;margin-left:6px;">DEMO</span>':''}</div>
+        <div class="mdesc">${m.desc}</div>
+        <div class="tag">${m.tag}</div>
+      </div>
+      <div class="attendees">${m.attendees}</div>
+    </div>
+  `).join('') : `<div class="empty-state">Немає запланованих зустрічей</div>`;
+}
+
+/* =========================================================================
+   RENDER: WHY (logic + priorities)
+   ========================================================================= */
+function renderWhy(){
+  document.getElementById('logicFlow').innerHTML = LOGIC_FLOW.map(f=>{
+    const pillar = PILLARS[f.pillar] || {color:'#999'};
+    return `
+    <div class="flow-step" style="--pillar:${pillar.color}">
+      <div class="dot"></div>
+      <div>
+        <div class="ftitle">${f.title}</div>
+        <div class="fdesc">${f.desc}</div>
+      </div>
+    </div>`;
+  }).join('');
+
+  document.getElementById('priorityList').innerHTML = PRIORITIES.map(p=>`
+    <li>
+      <div>
+        <b>${p.title}</b>
+        <div class="items">${p.items}</div>
+      </div>
+    </li>
+  `).join('');
+
+  document.getElementById('principlesRow').innerHTML = KEY_PRINCIPLES.map(pr=>
+    `<span class="chip">${pr}</span>`
+  ).join('');
+}
+
+/* =========================================================================
+   RENDER: HOW (protocols)
+   ========================================================================= */
+function renderProtocols(){
+  document.getElementById('protocolIndex').innerHTML = PROTOCOLS.map(p=>`
+    <li><span class="pnum">${p.num}</span> <span>${p.name}</span> <span class="ptrack">${p.track}</span></li>
+  `).join('');
+
+  document.getElementById('doorsGrid').innerHTML = PARTICIPATION_DOORS.map(d=>`
+    <div class="door-card">
+      <div class="dicon">${d.icon}</div>
+      <div class="dtitle">${d.title}</div>
+      <div class="dtag">${d.tag}</div>
+    </div>
+  `).join('');
+}
+
+/* =========================================================================
+   MODALS — add person / project / meeting (in-memory + localStorage)
+   ========================================================================= */
+function openModal(type){
+  const bg = document.getElementById('modalBg');
+  const body = document.getElementById('modalBody');
+  if(type==='person'){
+    body.innerHTML = `
+      <h3>Додати людину</h3>
+      <label>Ім'я</label><input id="m_name" placeholder="Напр. Олена К.">
+      <label>Роль</label><input id="m_role" placeholder="Напр. Country Assembly Director · Poland">
+      <label>Зона відповідальності</label><textarea id="m_scope" rows="2" placeholder="Короткий опис"></textarea>
+      <label>Регіон</label><input id="m_region" placeholder="Напр. Польща">
+      <label>Група</label>
+      <select id="m_group">
+        <option>Governance Layer</option>
+        <option>Executive Core</option>
+        <option>Critical Infrastructure</option>
+        <option>Core Operational Departments</option>
+        <option>Global Structure</option>
+        <option>Волонтерська спільнота</option>
+      </select>
+      <div class="modal-actions">
+        <button class="btn ghost small" onclick="closeModal()">Скасувати</button>
+        <button class="btn small" onclick="submitPerson()">Зберегти</button>
+      </div>`;
+  }
+  if(type==='project'){
+    const pillarOpts = Object.values(PILLARS).map(p=>`<option value="${p.key}">${p.label}</option>`).join('');
+    const statusOpts = Object.entries(STATUS).map(([k,v])=>`<option value="${k}">${v.label}</option>`).join('');
+    body.innerHTML = `
+      <h3>Додати проєкт</h3>
+      <label>Назва</label><input id="m_title" placeholder="Напр. Пілот WLCE у Польщі">
+      <label>Напрям</label><select id="m_pillar">${pillarOpts}</select>
+      <label>Статус</label><select id="m_status">${statusOpts}</select>
+      <label>Опис</label><textarea id="m_desc" rows="2"></textarea>
+      <label>Відповідальний(а)</label><input id="m_owner" placeholder="Роль або ім'я">
+      <div class="modal-actions">
+        <button class="btn ghost small" onclick="closeModal()">Скасувати</button>
+        <button class="btn small" onclick="submitProject()">Зберегти</button>
+      </div>`;
+  }
+  if(type==='meeting'){
+    body.innerHTML = `
+      <h3>Додати зустріч</h3>
+      <label>Дата</label><input id="m_date" type="date" value="2026-09-01">
+      <label>Назва</label><input id="m_mtitle" placeholder="Напр. Зустріч з партнером у Варшаві">
+      <label>Опис</label><textarea id="m_mdesc" rows="2"></textarea>
+      <label>Тег</label><input id="m_tag" placeholder="Напр. Партнерства">
+      <label>Учасники</label><input id="m_att" placeholder="Напр. CEO + Partnership Coordinator">
+      <div class="modal-actions">
+        <button class="btn ghost small" onclick="closeModal()">Скасувати</button>
+        <button class="btn small" onclick="submitMeeting()">Зберегти</button>
+      </div>`;
+  }
+  bg.classList.add('open');
+}
+function closeModal(){ document.getElementById('modalBg').classList.remove('open'); }
+document.getElementById('modalBg').addEventListener('click', (e)=>{ if(e.target.id==='modalBg') closeModal(); });
+
+function submitPerson(){
+  const name = document.getElementById('m_name').value.trim() || '—';
+  const role = document.getElementById('m_role').value.trim() || 'Нова роль';
+  const scope = document.getElementById('m_scope').value.trim() || 'Опис буде додано.';
+  const region = document.getElementById('m_region').value.trim() || '—';
+  const group = document.getElementById('m_group').value;
+  team.push({ name, role, scope, region, demo:true, group });
+  saveState('wf_team', team);
+  closeModal(); renderTeam(); renderToday();
+}
+function submitProject(){
+  const title = document.getElementById('m_title').value.trim() || 'Новий проєкт';
+  const pillar = document.getElementById('m_pillar').value;
+  const status = document.getElementById('m_status').value;
+  const desc = document.getElementById('m_desc').value.trim() || 'Опис буде додано.';
+  const owner = document.getElementById('m_owner').value.trim() || '—';
+  projects.push({ title, pillar, status, desc, owner, demo:true });
+  saveState('wf_projects', projects);
+  closeModal(); renderStatusFilters(); renderProjects(); renderToday();
+}
+function submitMeeting(){
+  const date = document.getElementById('m_date').value || '2026-09-01';
+  const title = document.getElementById('m_mtitle').value.trim() || 'Нова зустріч';
+  const desc = document.getElementById('m_mdesc').value.trim() || '';
+  const tag = document.getElementById('m_tag').value.trim() || 'Загальне';
+  const attendees = document.getElementById('m_att').value.trim() || '—';
+  meetings.push({ date, title, desc, tag, attendees, demo:true });
+  saveState('wf_meetings', meetings);
+  closeModal(); renderMeetings(); renderToday();
+}
+
+/* =========================================================================
+   GLOBAL SEARCH — matches org chart (board/executive/departments), custom
+   team, projects and meetings; jumps to the most relevant view.
+   ========================================================================= */
+function collectOrgPeople(){
+  const list = [];
+  BOARD.forEach(p=>list.push({ name:p.name, role:p.role, scope:p.ua, source:"Governance · Board" }));
+  EXECUTIVE_CORE.forEach(p=>list.push({ name:p.name, role:p.role, scope:p.ua, source:"Executive Core" }));
+  INFRA_DEPARTMENTS.forEach(d=>list.push({ name:d.head, role:d.name, scope:d.ua, source:"Critical Infrastructure" }));
+  OPERATIONAL_DEPARTMENTS.forEach(d=>list.push({ name:d.head, role:d.name, scope:d.ua, source:"Core Operational" }));
+  return list;
+}
+
+document.getElementById('globalSearch').addEventListener('input', (e)=>{
+  const q = e.target.value.trim().toLowerCase();
+  if(!q){ renderOrgChart(); renderTeam(); renderProjects(); renderMeetings(); return; }
+
+  const orgMatch = collectOrgPeople().filter(p => (p.name+p.role+p.scope).toLowerCase().includes(q));
+  const teamMatch = team.filter(t => (t.name+t.role+t.scope+t.group).toLowerCase().includes(q));
+  const projMatch = projects.filter(p => (p.title+p.desc+p.owner).toLowerCase().includes(q));
+  const meetMatch = meetings.filter(m => (m.title+m.desc+m.tag).toLowerCase().includes(q));
+
+  const peopleResults = [...orgMatch, ...teamMatch.map(t=>({name:t.name, role:t.role, scope:t.scope, source:'Додано вручну (DEMO)'}))];
+  document.getElementById('orgLayers').innerHTML = peopleResults.length ? `
+    <div class="layer-block"><div class="layer-head"><h3>Результати пошуку</h3></div>
+    <div class="team-grid">${peopleResults.map(p=>`
+      <div class="person"><div class="role">${p.role}</div><div class="name">${p.name}</div>
+      <div class="scope">${p.scope||''}</div><div class="meta"><span>${p.source}</span><span></span></div></div>
+    `).join('')}</div></div>` : `<div class="empty-state">Нічого не знайдено серед людей</div>`;
+
+  document.getElementById('projectList').innerHTML = projMatch.length ? projMatch.map(p=>{
+    const pillar = PILLARS[p.pillar] || {label:p.pillar, color:'#999'};
+    const st = STATUS[p.status] || {label:p.status, cls:''};
+    return `<div class="project" style="--pillar:${pillar.color}">
+      <div><div class="title">${p.title}${p.flagship?'<span class="flagship-badge">★ Флагман</span>':''}</div><div class="pillar-tag">${pillar.label}</div><div class="desc">${p.desc}</div></div>
+      <span class="status-pill ${st.cls}">${st.label}</span>
+      <div class="owner">${p.owner}</div></div>`;
+  }).join('') : `<div class="empty-state">Нічого не знайдено серед проєктів</div>`;
+
+  document.getElementById('meetingList').innerHTML = meetMatch.length ? meetMatch.map(m=>`
+    <div class="meeting"><div class="date">${formatDate(m.date)}</div>
+    <div><div class="mtitle">${m.title}</div><div class="mdesc">${m.desc}</div><div class="tag">${m.tag}</div></div>
+    <div class="attendees">${m.attendees}</div></div>`).join('') : `<div class="empty-state">Нічого не знайдено серед зустрічей</div>`;
+
+  if(peopleResults.length) switchView('who');
+  else if(projMatch.length) switchView('what');
+  else if(meetMatch.length) switchView('when');
+});
+
+/* =========================================================================
+   INIT
+   ========================================================================= */
+renderToday();
+renderLayerFilters(); renderFlowLegend(); renderOrgChart(); renderTeam();
+renderStatusFilters(); renderProjects();
+renderRegistries();
+renderMeetings();
+renderWhy();
+renderProtocols();
+</script>
+</body>
+</html>
