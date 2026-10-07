@@ -1,0 +1,1393 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Womafreesm — Internal Team Hub</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;0,600;0,700;1,500&family=Open+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#F3EEF2;
+    --panel:#FFFFFF;
+    --ink:#2A1B2C;
+    --ink-soft:#6B5A6E;
+    --line:#DCCEDC;
+    --line-soft:#EAE0E8;
+    --seal:#5C2C58;
+    --seal-ink:#462143;
+    --accent-research:#2C6E63;
+    --accent-pathway:#9E4B54;
+    --accent-assembly:#3B4A73;
+    --accent-wlce:#5C2C58;
+    --accent-spirit:#6E5A8C;
+    --accent-culture:#B5732E;
+    --accent-reading:#4A6741;
+    --radius:8px;
+    --shadow: 0 1px 2px rgba(42,27,44,0.08);
+    /* Access-level system — visual labels only, NOT real security. See demo-banner. */
+    --acc-team:#2C6E63;
+    --acc-team-bg:#E6F0ED;
+    --acc-cd:#3B4A73;
+    --acc-cd-bg:#E9ECF4;
+    --acc-restricted:#9E4B54;
+    --acc-restricted-bg:#F6E9EA;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--paper);
+    color:var(--ink);
+    font-family:'Open Sans', sans-serif;
+    font-size:15px;
+    line-height:1.5;
+    -webkit-font-smoothing:antialiased;
+  }
+  h1,h2,h3,.serif{ font-family:'Lora', serif; }
+  .mono{ font-family:'IBM Plex Mono', monospace; letter-spacing:0.01em;}
+  /* Access badge pills — purely informational; real enforcement needs backend auth (see demo-banner) */
+  .access-badge{ display:inline-flex; align-items:center; gap:4px; font-size:10.5px; font-weight:600; letter-spacing:.03em; padding:2px 9px; border-radius:20px; white-space:nowrap; }
+  .access-team{ background:var(--acc-team-bg); color:var(--acc-team); }
+  .access-cd{ background:var(--acc-cd-bg); color:var(--acc-cd); }
+  .access-restricted{ background:var(--acc-restricted-bg); color:var(--acc-restricted); }
+  .verify-flag{ display:inline-block; font-size:10px; font-weight:600; color:#9c6b1f; background:#fbf1dc; border:1px solid #e6cd9a; padding:1px 7px; border-radius:10px; margin-left:6px; }
+  a{ color:inherit; }
+  button{ font-family:inherit; cursor:pointer; }
+
+  /* ===== Shell layout ===== */
+  .shell{ display:grid; grid-template-columns:230px 1fr; min-height:100vh; }
+
+  /* ===== Top bar ===== */
+  .topbar{
+    grid-column:1 / -1;
+    display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px;
+    padding:14px 28px; border-bottom:1px solid var(--line);
+    background:var(--paper);
+    position:sticky; top:0; z-index:20;
+  }
+  .brand{ display:flex; align-items:baseline; gap:10px; min-width:0; }
+  .brand .mark{
+    width:30px;height:30px;border:1.5px solid var(--ink); border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+    font-family:'Source Serif 4',serif; font-weight:700; font-size:14px;
+    flex:none;
+  }
+  .brand h1{ font-size:17px; margin:0; font-weight:600; }
+  .brand .sub{ font-size:12px; color:var(--ink-soft); font-family:'IBM Plex Mono',monospace; }
+  .topbar-right{ display:flex; align-items:center; gap:18px; flex-wrap:wrap; }
+  .clock{ font-family:'IBM Plex Mono',monospace; font-size:12.5px; color:var(--ink-soft); text-align:right; white-space:nowrap; }
+  .search-box{ position:relative; }
+  .search-box input{
+    width:220px; padding:7px 10px 7px 30px; border:1px solid var(--line);
+    background:var(--panel); font-family:inherit; font-size:13px; border-radius:var(--radius);
+    color:var(--ink);
+  }
+  .search-box input:focus{ outline:2px solid var(--seal); outline-offset:1px; }
+  .search-box::before{
+    content:"⌕"; position:absolute; left:9px; top:6px; color:var(--ink-soft); font-size:15px;
+  }
+
+  /* ===== Left rail (desktop: fixed vertical column) ===== */
+  .rail{
+    border-right:1px solid var(--line);
+    padding:18px 0;
+    position:sticky; top:65px; align-self:start; height:calc(100vh - 65px); overflow-y:auto;
+  }
+  .rail-group-label{
+    font-size:10.5px; text-transform:uppercase; letter-spacing:.09em; color:var(--ink-soft);
+    padding:4px 22px; margin-top:10px;
+  }
+  .rail button.nav-item{
+    display:flex; align-items:center; gap:11px; width:100%; text-align:left;
+    background:none; border:none; padding:10px 22px; font-size:13.5px; color:var(--ink);
+    border-left:3px solid transparent;
+  }
+  .rail button.nav-item .num{ font-family:'IBM Plex Mono',monospace; font-size:11px; color:var(--ink-soft); width:16px;}
+  .rail button.nav-item:hover{ background:rgba(0,0,0,0.03); }
+  .rail button.nav-item.active{ border-left:3px solid var(--seal); background:var(--panel); font-weight:600; }
+  .rail button.nav-item.active .num{ color:var(--seal); }
+  .rail-foot{ padding:16px 22px; margin-top:20px; border-top:1px solid var(--line-soft); }
+  .rail-foot summary{ font-size:10.5px; text-transform:uppercase; letter-spacing:.09em; color:var(--ink-soft); cursor:pointer; list-style:none; }
+  .rail-foot summary::-webkit-details-marker{ display:none; }
+  .rail-foot .links{ margin-top:10px; }
+  .rail-foot a{ display:block; font-size:12px; color:var(--ink-soft); margin-bottom:6px; text-decoration:none; padding:4px 0; }
+  .rail-foot a:hover{ color:var(--seal-ink); text-decoration:underline; }
+
+  /* ===== Main ===== */
+  main{ padding:30px 40px 80px; max-width:1080px; }
+
+  /* =========================================================================
+     MOBILE ADAPTATION (<=860px)
+     Rail becomes a horizontal, thumb-scrollable tab strip pinned under the
+     topbar instead of a full-height side column; footer links collapse into
+     a native <details> accordion so they don't eat vertical space by default.
+     ========================================================================= */
+  @media (max-width:860px){
+    html,body{ overflow-x:hidden; max-width:100vw; }
+    .shell{ grid-template-columns:1fr; min-width:0; }
+    .shell > *{ min-width:0; }
+
+    .topbar{ padding:12px 16px; gap:8px; }
+    .brand h1{ font-size:15px; }
+    .brand .sub{ font-size:10.5px; }
+    .topbar-right{ width:100%; justify-content:space-between; gap:10px; order:3; }
+    .search-box{ flex:1; }
+    .search-box input{ width:100%; font-size:16px; }
+    .clock{ font-size:11px; text-align:left; }
+
+    .rail{
+      position:sticky; top:0; height:auto; max-height:none; overflow:visible;
+      border-right:none; border-bottom:1px solid var(--line); padding:10px 0 0;
+      background:var(--paper); z-index:15;
+    }
+    .rail-group-label{ display:none; }
+    .rail-scroll{
+      display:flex; gap:2px; overflow-x:auto; padding:0 12px 10px;
+      -webkit-overflow-scrolling:touch; scrollbar-width:none;
+    }
+    .rail-scroll::-webkit-scrollbar{ display:none; }
+    .rail button.nav-item{
+      width:auto; flex:none; white-space:nowrap; padding:8px 14px;
+      border-left:none; border-bottom:3px solid transparent; border-radius:0;
+      font-size:12.5px;
+    }
+    .rail button.nav-item.active{ border-left:none; border-bottom:3px solid var(--seal); background:none; }
+    .rail-foot{
+      padding:0; margin:0; border-top:1px solid var(--line-soft);
+    }
+    .rail-foot summary{
+      list-style:none; cursor:pointer; padding:9px 16px; font-size:11.5px;
+      color:var(--ink-soft); text-transform:uppercase; letter-spacing:.05em;
+      display:flex; align-items:center; justify-content:space-between;
+    }
+    .rail-foot summary::-webkit-details-marker{ display:none; }
+    .rail-foot summary::after{ content:"▾"; font-size:10px; }
+    .rail-foot[open] summary::after{ content:"▴"; }
+    .rail-foot .links{ padding:0 16px 12px; }
+    .rail-foot a{ padding:6px 0; }
+
+    main{ padding:18px 16px 64px; }
+    .view-head h2{ font-size:21px; }
+    .view-head p{ font-size:13px; }
+    .card{ padding:15px 16px; }
+    .actions-row{ justify-content:stretch; }
+    .actions-row .btn{ flex:1; justify-content:center; }
+  }
+  @media (max-width:480px){
+    .brand .sub{ display:none; }
+    .snapshot{ grid-template-columns:1fr 1fr; }
+    .snapshot .cell{ padding:12px 14px; }
+    .person, .reg-card, .card{ padding:14px; }
+    .modal{ padding:18px; }
+  }
+  .demo-banner{
+    display:flex; align-items:start; gap:10px;
+    background:#F5EFE0; border:1px solid var(--line); padding:10px 14px;
+    font-size:12.5px; color:var(--ink-soft); margin-bottom:26px; border-radius:var(--radius);
+  }
+  .demo-banner b{ color:var(--seal-ink); }
+
+  section.view{ display:none; }
+  section.view.active{ display:block; animation:fadein .25s ease; }
+  @keyframes fadein{ from{opacity:0; transform:translateY(4px);} to{opacity:1; transform:none;} }
+
+  .view-head{ margin-bottom:22px; border-bottom:1px solid var(--line); padding-bottom:16px; }
+  .view-head .kicker{ font-family:'IBM Plex Mono',monospace; font-size:11.5px; color:var(--seal-ink); text-transform:uppercase; letter-spacing:.08em; }
+  .view-head h2{ font-size:26px; margin:4px 0 6px; }
+  .view-head p{ margin:0; color:var(--ink-soft); max-width:640px; font-size:14px; }
+
+  /* Hero / snapshot (Today) */
+  .snapshot{
+    display:grid; grid-template-columns:repeat(4,1fr); gap:1px;
+    background:var(--line); border:1px solid var(--line); margin-bottom:30px;
+  }
+  .snapshot .cell{ background:var(--panel); padding:16px 18px; }
+  .snapshot .cell .num{ font-family:'Source Serif 4',serif; font-size:28px; font-weight:600; }
+  .snapshot .cell .label{ font-size:12px; color:var(--ink-soft); margin-top:2px; }
+  @media (max-width:700px){ .snapshot{ grid-template-columns:1fr 1fr; } }
+
+  .hero-grid{ display:grid; grid-template-columns:1.4fr 1fr; gap:22px; margin-bottom:10px; }
+  @media (max-width:820px){ .hero-grid{ grid-template-columns:1fr; } }
+  .card{ background:var(--panel); border:1px solid var(--line); border-radius:var(--radius); padding:18px 20px; }
+  .card h3{ font-size:14px; margin:0 0 10px; text-transform:uppercase; letter-spacing:.04em; color:var(--ink-soft); font-family:'IBM Plex Sans'; font-weight:600; }
+  .mission-line{ font-family:'Source Serif 4',serif; font-size:19px; line-height:1.45; margin:0 0 14px; }
+  .chip-row{ display:flex; flex-wrap:wrap; gap:6px; margin-top:8px; }
+  .chip{ font-size:11.5px; border:1px solid var(--line); padding:3px 9px; border-radius:20px; color:var(--ink-soft); }
+
+  /* Filters */
+  .filter-row{ display:flex; gap:8px; flex-wrap:wrap; margin-bottom:18px; }
+  .filter-row button{
+    border:1px solid var(--line); background:var(--panel); padding:6px 12px; border-radius:20px;
+    font-size:12.5px; color:var(--ink-soft);
+  }
+  .filter-row button.active{ background:var(--ink); color:var(--panel); border-color:var(--ink); }
+
+  /* Team */
+  .team-grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(240px,1fr)); gap:14px; }
+  .person{ background:var(--panel); border:1px solid var(--line); border-radius:var(--radius); padding:16px; position:relative;}
+  .person .phead{ display:flex; align-items:center; gap:12px; margin-bottom:4px; }
+  .person .photo{
+    width:48px; height:48px; border-radius:50%; object-fit:cover; flex:none;
+    box-shadow:0 0 0 1px var(--line);
+  }
+  .person .role{ font-size:11px; text-transform:uppercase; letter-spacing:.05em; color:var(--seal-ink); font-family:'IBM Plex Mono',monospace; margin-bottom:6px;}
+  .person .name{ font-family:'Source Serif 4',serif; font-size:17px; font-weight:600; margin-bottom:4px; }
+  .person .scope{ font-size:12.5px; color:var(--ink-soft); margin-bottom:10px; min-height:34px;}
+  .person .meta{ font-size:11.5px; color:var(--ink-soft); display:flex; justify-content:space-between; border-top:1px solid var(--line-soft); padding-top:8px;}
+  .badge-demo{ position:absolute; top:12px; right:12px; font-size:9.5px; font-family:'IBM Plex Mono',monospace; color:#b08b3f; border:1px solid #d8c290; padding:1px 6px; border-radius:10px; background:#fbf5e8;}
+
+  /* ===== Org chart: layers, committees, departments ===== */
+  .layer-block{ margin-bottom:34px; }
+  .layer-head{ display:flex; align-items:baseline; gap:10px; margin-bottom:12px; }
+  .layer-head .lnum{
+    font-family:'IBM Plex Mono',monospace; font-size:12px; color:var(--panel); background:var(--ink);
+    width:22px; height:22px; border-radius:50%; display:flex; align-items:center; justify-content:center; flex:none;
+  }
+  .layer-head h3{ font-family:'Source Serif 4',serif; font-size:17px; margin:0; }
+  .layer-head .lsub{ font-size:12px; color:var(--ink-soft); }
+
+  .committee-grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:10px; margin-top:12px; }
+  .committee-card{ background:var(--panel); border:1px solid var(--line); border-radius:var(--radius); padding:12px 14px; }
+  .committee-card .cname{ font-size:13px; font-weight:600; margin-bottom:4px; }
+  .committee-card .cdesc{ font-size:11.5px; color:var(--ink-soft); }
+
+  .dept-grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:14px; }
+  .dept-card{ background:var(--panel); border:1px solid var(--line); border-radius:var(--radius); padding:16px 18px; }
+  .dept-card .dname{ font-family:'Source Serif 4',serif; font-size:15.5px; font-weight:600; }
+  .dept-card .dua{ font-size:12px; color:var(--ink-soft); margin-top:2px; }
+  .dept-card .dhead{ font-size:11.5px; font-family:'IBM Plex Mono',monospace; color:var(--seal-ink); margin:8px 0 10px; padding-top:8px; border-top:1px solid var(--line-soft); }
+  .dept-card .dhead.unassigned{ color:var(--ink-soft); }
+  .func-chip-row{ display:flex; flex-wrap:wrap; gap:5px; }
+  .func-chip{ font-size:10.5px; border:1px solid var(--line-soft); padding:2px 8px; border-radius:12px; color:var(--ink-soft); }
+
+  .flow-legend{ display:flex; flex-wrap:wrap; gap:16px; padding:14px 18px; background:var(--panel); border:1px solid var(--line); border-radius:var(--radius); margin-bottom:30px; }
+  .flow-legend .fitem{ display:flex; align-items:center; gap:7px; font-size:12px; color:var(--ink-soft); }
+  .flow-legend .fsym{ font-family:'IBM Plex Mono',monospace; color:var(--seal-ink); font-size:14px; width:16px; text-align:center; }
+
+  .global-strip{ display:flex; flex-wrap:wrap; gap:8px; margin:14px 0 18px; }
+  .region-chip{ font-size:12px; border:1px solid var(--line); padding:5px 12px; border-radius:20px; background:var(--panel); }
+  .global-levels{ list-style:none; margin:0; padding:0; }
+  .global-levels li{ display:flex; align-items:center; gap:12px; padding:10px 0; border-bottom:1px solid var(--line-soft); font-size:13.5px; }
+  .global-levels li .arrow{ color:var(--seal-ink); font-family:'IBM Plex Mono',monospace; }
+
+  .doors-grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:12px; margin-bottom:26px; }
+  .door-card{ background:var(--panel); border:1px solid var(--line); border-radius:var(--radius); padding:16px 14px; text-align:center; }
+  .door-card .dicon{ font-size:22px; margin-bottom:8px; }
+  .door-card .dtitle{ font-family:'Source Serif 4',serif; font-size:14.5px; font-weight:600; }
+  .door-card .dtag{ font-size:11px; color:var(--ink-soft); font-family:'IBM Plex Mono',monospace; margin-top:3px; }
+
+  .flagship-badge{ font-size:10px; text-transform:uppercase; letter-spacing:.04em; color:#7a5417; background:#fbf1dc; border:1px solid #e6cd9a; padding:2px 7px; border-radius:10px; margin-left:8px; }
+
+  .compliance-row{ display:flex; flex-wrap:wrap; gap:8px 18px; padding:14px 0; }
+  .compliance-row .citem{ display:flex; align-items:center; gap:6px; font-size:12px; color:var(--ink-soft); }
+  .compliance-row .citem::before{ content:"✓"; color:var(--accent-research); font-weight:700; }
+
+  .mission-block{ text-align:left; }
+  .mission-tagline{ font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:.06em; color:var(--seal-ink); text-transform:uppercase; margin-bottom:6px; }
+  .mission-syn{ font-size:11.5px; color:var(--ink-soft); margin-top:8px; }
+
+
+  /* Projects */
+  .project-list{ display:flex; flex-direction:column; gap:10px; }
+  .project{ background:var(--panel); border:1px solid var(--line); border-left:4px solid var(--pillar,#999); border-radius:var(--radius); padding:14px 18px; display:grid; grid-template-columns:1fr auto auto; gap:16px; align-items:center; }
+  @media (max-width:700px){ .project{ grid-template-columns:1fr; } }
+  .project .title{ font-family:'Source Serif 4',serif; font-size:16.5px; font-weight:600; }
+  .project .pillar-tag{ font-size:11px; color:var(--ink-soft); font-family:'IBM Plex Mono',monospace; margin-top:2px;}
+  .project .desc{ font-size:13px; color:var(--ink-soft); margin-top:5px; max-width:520px;}
+  .status-pill{ font-size:11.5px; padding:4px 11px; border-radius:20px; white-space:nowrap; border:1px solid transparent;}
+  .status-live{ background:#e3efe9; color:#286148; }
+  .status-dev{ background:#eef1f8; color:#3b4a73; }
+  .status-pilot{ background:#f7f1e2; color:#9c6b1f; }
+  .status-funding{ background:#f8ece9; color:#9e4b54; }
+  .status-paused{ background:#ececec; color:#666; }
+  .status-done{ background:#e8e6f2; color:#4a3f6e; }
+  .project .owner{ font-size:12px; color:var(--ink-soft); text-align:right; }
+  @media (max-width:700px){ .project .owner, .status-pill{ text-align:left; justify-self:start; } }
+
+  .table-scroll{ overflow-x:auto; -webkit-overflow-scrolling:touch; }
+
+  /* Registries / resources */
+  .reg-grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(260px,1fr)); gap:14px; margin-bottom:26px;}
+  .reg-card{ background:var(--panel); border:1px solid var(--line); padding:16px; border-radius:var(--radius);}
+  .reg-card .reg-owner{ font-size:11px; font-family:'IBM Plex Mono',monospace; color:var(--ink-soft); text-transform:uppercase;}
+  .reg-card h4{ font-size:15px; margin:6px 0 6px; font-family:'Source Serif 4',serif;}
+  .reg-card p{ font-size:12.5px; color:var(--ink-soft); margin:0 0 10px;}
+  .reg-card a.link{ font-size:12.5px; color:var(--seal-ink); text-decoration:none; border-bottom:1px solid var(--seal-ink); }
+
+  .doc-table{ width:100%; border-collapse:collapse; font-size:13px; }
+  .doc-table th{ text-align:left; font-size:11px; text-transform:uppercase; letter-spacing:.05em; color:var(--ink-soft); padding:8px 10px; border-bottom:1px solid var(--line); }
+  .doc-table td{ padding:9px 10px; border-bottom:1px solid var(--line-soft); vertical-align:top; }
+  .doc-table tr:hover td{ background:rgba(0,0,0,0.02); }
+  .code{ font-family:'IBM Plex Mono',monospace; font-size:12px; color:var(--seal-ink); }
+
+  /* Meetings / calendar */
+  .meeting-list{ display:flex; flex-direction:column; gap:0; border-top:1px solid var(--line); }
+  .meeting{ display:grid; grid-template-columns:110px 1fr auto; gap:16px; padding:14px 4px; border-bottom:1px solid var(--line-soft); align-items:start;}
+  @media (max-width:700px){ .meeting{ grid-template-columns:1fr; } }
+  .meeting .date{ font-family:'IBM Plex Mono',monospace; font-size:12.5px; color:var(--seal-ink); }
+  .meeting .mtitle{ font-family:'Source Serif 4',serif; font-size:15.5px; font-weight:600; }
+  .meeting .mdesc{ font-size:12.5px; color:var(--ink-soft); margin-top:3px; }
+  .meeting .tag{ font-size:10.5px; text-transform:uppercase; letter-spacing:.04em; color:var(--ink-soft); }
+  .meeting .attendees{ font-size:11.5px; color:var(--ink-soft); text-align:right; }
+  @media (max-width:700px){ .meeting .attendees{ text-align:left; } .meeting .date{ order:-1; } }
+
+  /* Buttons */
+  .btn{ display:inline-flex; align-items:center; gap:6px; background:var(--ink); color:var(--panel); border:none; padding:9px 16px; font-size:13px; border-radius:var(--radius); }
+  .btn:hover{ background:#000; }
+  .btn.ghost{ background:none; color:var(--ink); border:1px solid var(--line); }
+  .btn.ghost:hover{ background:rgba(0,0,0,0.04); }
+  .btn.small{ padding:5px 10px; font-size:12px; }
+  .actions-row{ display:flex; justify-content:flex-end; margin-bottom:14px; gap:8px; }
+
+  /* Modal */
+  .modal-bg{ position:fixed; inset:0; background:rgba(20,20,25,0.45); display:none; align-items:flex-start; justify-content:center; padding:60px 20px; z-index:50; overflow-y:auto;}
+  .modal-bg.open{ display:flex; }
+  .modal{ background:var(--panel); border:1px solid var(--line); max-width:460px; width:100%; padding:24px; border-radius:var(--radius); }
+  @media (max-width:600px){
+    .modal-bg{ padding:0; align-items:flex-end; }
+    .modal{ max-width:none; border-radius:0; max-height:92vh; overflow-y:auto; }
+    .modal-actions{ position:sticky; bottom:-24px; background:var(--panel); margin:20px -24px -24px; padding:14px 24px; border-top:1px solid var(--line-soft); }
+  }
+  .modal h3{ font-family:'Source Serif 4',serif; font-size:19px; margin:0 0 16px; }
+  .modal label{ display:block; font-size:12px; color:var(--ink-soft); margin:12px 0 4px; }
+  .modal input, .modal select, .modal textarea{
+    width:100%; padding:8px 10px; border:1px solid var(--line); font-family:inherit; font-size:16px; border-radius:var(--radius); background:#fff;
+  }
+  @media (min-width:601px){ .modal input, .modal select, .modal textarea{ font-size:13.5px; } }
+  .modal-actions{ display:flex; justify-content:flex-end; gap:10px; margin-top:20px; }
+
+  /* Mission / Why */
+  .pillars-flow{ display:flex; flex-direction:column; gap:10px; margin:20px 0 26px;}
+  .flow-step{ display:flex; gap:14px; align-items:flex-start; padding:12px 0; border-bottom:1px solid var(--line-soft); }
+  .flow-step .dot{ width:9px;height:9px;border-radius:50%; background:var(--pillar,#999); margin-top:6px; flex:none;}
+  .flow-step .ftitle{ font-family:'Source Serif 4',serif; font-weight:600; font-size:15px; }
+  .flow-step .fdesc{ font-size:13px; color:var(--ink-soft); margin-top:2px; max-width:600px;}
+
+  .priority-list{ counter-reset:pr; list-style:none; margin:0; padding:0; }
+  .priority-list li{ counter-increment:pr; display:flex; gap:14px; padding:12px 0; border-bottom:1px solid var(--line-soft); }
+  .priority-list li::before{ content:counter(pr,decimal-leading-zero); font-family:'IBM Plex Mono',monospace; color:var(--seal-ink); font-size:13px; padding-top:2px;}
+  .priority-list b{ font-family:'Source Serif 4',serif; font-weight:600; }
+  .priority-list .items{ font-size:12.5px; color:var(--ink-soft); margin-top:3px; }
+
+  /* Protocols / How */
+  .protocol-index{ list-style:none; margin:0; padding:0; border-top:1px solid var(--line); }
+  .protocol-index li{ display:flex; gap:14px; padding:10px 4px; border-bottom:1px solid var(--line-soft); align-items:baseline; font-size:13.5px;}
+  .protocol-index .pnum{ font-family:'IBM Plex Mono',monospace; color:var(--seal-ink); font-size:12.5px; width:24px; flex:none; }
+  .protocol-index .ptrack{ font-size:10.5px; text-transform:uppercase; color:var(--ink-soft); margin-left:auto; letter-spacing:.04em;}
+
+  .principle-box{ background:var(--panel); border:1px solid var(--line); border-left:4px solid var(--seal); padding:16px 20px; margin-bottom:20px; }
+  .principle-box .p-label{ font-size:11px; text-transform:uppercase; letter-spacing:.06em; color:var(--seal-ink); font-family:'IBM Plex Mono',monospace; }
+  .principle-box p{ margin:6px 0 0; font-family:'Source Serif 4',serif; font-size:16px; }
+
+  .empty-state{ padding:30px; text-align:center; color:var(--ink-soft); font-size:13.5px; border:1px dashed var(--line); border-radius:var(--radius); }
+  .footnote{ font-size:11.5px; color:var(--ink-soft); margin-top:30px; border-top:1px solid var(--line); padding-top:14px;}
+</style>
+</head>
+<body>
+
+<div class="shell">
+  <div class="topbar">
+    <div class="brand">
+      <div class="mark">W</div>
+      <div>
+        <h1>Womafreesm — Internal Team Hub</h1>
+        <div class="sub">One organization. One team. One source of truth.</div>
+      </div>
+    </div>
+    <div class="topbar-right">
+      <div class="search-box">
+        <input id="globalSearch" type="text" placeholder="Пошук: людина, проєкт, документ…">
+      </div>
+      <div class="clock" id="clockBox">—</div>
+    </div>
+  </div>
+
+  <nav class="rail">
+    <div class="rail-group-label">Знайти відповідь за 2–3 хв</div>
+    <div class="rail-scroll">
+      <button class="nav-item active" data-view="today"><span class="num">•</span> Сьогодні</button>
+      <button class="nav-item" data-view="who"><span class="num">01</span> Хто відповідає</button>
+      <button class="nav-item" data-view="what"><span class="num">02</span> Що ми робимо</button>
+      <button class="nav-item" data-view="where"><span class="num">03</span> Де знайти інформацію</button>
+      <button class="nav-item" data-view="when"><span class="num">04</span> Коли (дедлайни/зустрічі)</button>
+      <button class="nav-item" data-view="why"><span class="num">05</span> Навіщо ми це робимо</button>
+      <button class="nav-item" data-view="how"><span class="num">06</span> Як це робити</button>
+      <button class="nav-item" data-view="docs"><span class="num">07</span> Документи (за доступом)</button>
+      <button class="nav-item" data-view="cd"><span class="num">08</span> Country Director Dashboard</button>
+    </div>
+
+    <details class="rail-foot" open>
+      <summary>Посилання</summary>
+      <div class="links">
+        <a href="https://irr.womafreesm.com/" target="_blank" rel="noopener">↗ irr.womafreesm.com</a>
+        <a href="https://tally.so/r/xX4oXJ" target="_blank" rel="noopener">↗ Анкета для агентств</a>
+        <a href="https://www.instagram.com/womafreesm/" target="_blank" rel="noopener">↗ Instagram (EN)</a>
+        <a href="https://www.linkedin.com/company/womafreesm-world" target="_blank" rel="noopener">↗ LinkedIn</a>
+      </div>
+    </details>
+  </nav>
+
+  <main>
+    <div class="demo-banner">
+      <span>⚠</span>
+      <span><b>Дані.</b> Організаційна структура звірена з документом «Организационная структура Womafreesm» (жовтень 2026) і виправлена там, де Org Chart v2.2 (травень 2025) був застарілим або помилковим — зокрема керівництво Volunteer & Community, Fundraising, Grants, Finance, Data Analytics/Research, Communications, та додано Executive Director Assembly, SMM Lead і реальні приклади Country/Regional Directors. Позиції з позначкою <span class="verify-flag" style="position:static;">Needs verification</span> досі потребують підтвердження від CEO. Розділ «Додано вручну» — демонстраційні записи (<span class="badge-demo" style="position:static;">DEMO</span>), що зберігаються лише локально (localStorage) у вашому браузері.<br><b>Доступ.</b> Позначки 🟢 Team / 🔵 Country Director / 🔴 Restricted — це інформаційна навігація, а не справжній захист даних: цей файл — статичний HTML без бекенду, тому будь-хто з лінком технічно бачить усе. Коли буде підключена реальна автентифікація, ця ж розмітка стане основою для прав доступу.</span>
+    </div>
+
+    <!-- ===================== TODAY ===================== -->
+    <section class="view active" id="view-today">
+      <div class="view-head">
+        <div class="kicker">Знімок дня</div>
+        <h2>Доброго дня, команда Womafreesm</h2>
+        <p>Єдина система координації для дослідження, захисту, Асамблеї, WLCE та культурних проєктів.</p>
+      </div>
+
+      <div class="snapshot" id="snapshotRow"></div>
+
+      <div class="hero-grid">
+        <div class="card">
+          <h3>Місія</h3>
+          <div class="mission-tagline">Evidence data · Legal rapid response · Infrastructure</div>
+          <p class="mission-line">Чинити конструкцію світу, створюючи систему довіри та дій для жінок і майбутніх поколінь.</p>
+          <div class="chip-row" id="pillarChips"></div>
+          <div class="mission-syn">Синархат — спільне управління чоловічого та жіночого начала · Org Chart v2.2, травень 2025</div>
+        </div>
+        <div class="card">
+          <h3>Найближче в календарі</h3>
+          <div id="upcomingMeeting"></div>
+          <button class="btn ghost small" style="margin-top:12px;" onclick="switchView('when')">Весь календар →</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== WHO ===================== -->
+    <section class="view" id="view-who">
+      <div class="view-head">
+        <div class="kicker">01 · Хто</div>
+        <h2>Хто відповідає</h2>
+        <p>Організаційна структура Womafreesm — Org Chart v2.2 (травень 2025): від наглядового рівня до глобальної мережі країн і хабів.</p>
+      </div>
+
+      <div class="filter-row" id="layerFilters"></div>
+      <div class="flow-legend" id="flowLegend"></div>
+
+      <div id="orgLayers"></div>
+
+      <div class="layer-block" id="customTeamBlock">
+        <div class="layer-head"><h3>Додано вручну</h3><span class="lsub">(демонстраційні записи цього браузера)</span></div>
+        <div class="actions-row">
+          <button class="btn ghost small" onclick="openModal('person')">+ Додати людину</button>
+        </div>
+        <div class="team-grid" id="teamGrid"></div>
+      </div>
+    </section>
+
+    <!-- ===================== WHAT ===================== -->
+    <section class="view" id="view-what">
+      <div class="view-head">
+        <div class="kicker">02 · Що</div>
+        <h2>Що ми робимо</h2>
+        <p>Сім напрямів Womafreesm. Кожен проєкт має власний статус — за принципом публічної підзвітності (Стратегічний план, розділ 23). Позначкою відзначено флагманські проєкти з Org Chart v2.2.</p>
+      </div>
+      <div class="filter-row" id="statusFilters"></div>
+      <div class="actions-row">
+        <button class="btn ghost small" onclick="openModal('project')">+ Додати проєкт</button>
+      </div>
+      <div class="project-list" id="projectList"></div>
+    </section>
+
+    <!-- ===================== WHERE ===================== -->
+    <section class="view" id="view-where">
+      <div class="view-head">
+        <div class="kicker">03 · Де</div>
+        <h2>Де знайти інформацію</h2>
+        <p>Сім обов'язкових операційних систем Асамблеї та ключові документи проєкту. Принцип: Documentation Before Memory.</p>
+      </div>
+      <div class="reg-grid" id="registryGrid"></div>
+
+      <h3 style="font-size:14px;text-transform:uppercase;letter-spacing:.04em;color:var(--ink-soft);margin:26px 0 10px;">Реєстр установчих документів</h3>
+      <div class="table-scroll">
+        <table class="doc-table" id="docTable">
+          <thead><tr><th>Код</th><th>Документ</th><th>Розділ</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+
+      <h3 style="font-size:14px;text-transform:uppercase;letter-spacing:.04em;color:var(--ink-soft);margin:26px 0 6px;">Відповідність і комплаєнс</h3>
+      <div class="compliance-row" id="complianceRow"></div>
+    </section>
+
+    <!-- ===================== WHEN ===================== -->
+    <section class="view" id="view-when">
+      <div class="view-head">
+        <div class="kicker">04 · Коли</div>
+        <h2>Дедлайни та зустрічі</h2>
+        <p>Ритм координації: щомісячне публічне оновлення, засідання Ради директорів, робочі групи Асамблеї.</p>
+      </div>
+      <div class="actions-row">
+        <button class="btn ghost small" onclick="openModal('meeting')">+ Додати зустріч</button>
+      </div>
+      <div class="meeting-list" id="meetingList"></div>
+    </section>
+
+    <!-- ===================== WHY ===================== -->
+    <section class="view" id="view-why">
+      <div class="view-head">
+        <div class="kicker">05 · Навіщо</div>
+        <h2>Навіщо ми це робимо</h2>
+        <p>Єдина логіка Womafreesm: від особистого досвіду жінки — до даних, від даних — до захисту, від захисту — до стандартів і культурних змін.</p>
+      </div>
+
+      <div class="pillars-flow" id="logicFlow"></div>
+
+      <h3 style="font-size:14px;text-transform:uppercase;letter-spacing:.04em;color:var(--ink-soft);margin:30px 0 6px;">Стратегічні пріоритети (у порядку черговості)</h3>
+      <ul class="priority-list" id="priorityList"></ul>
+
+      <h3 style="font-size:14px;text-transform:uppercase;letter-spacing:.04em;color:var(--ink-soft);margin:30px 0 10px;">Ключові принципи</h3>
+      <div class="chip-row" id="principlesRow"></div>
+    </section>
+
+    <!-- ===================== HOW ===================== -->
+    <section class="view" id="view-how">
+      <div class="view-head">
+        <div class="kicker">06 · Як</div>
+        <h2>Як це робити</h2>
+        <p>Шість дверей участі, операційний принцип і покроковий шлях документів, що регулюють роботу Асамблеї та партнерств.</p>
+      </div>
+
+      <h3 style="font-size:14px;text-transform:uppercase;letter-spacing:.04em;color:var(--ink-soft);margin:0 0 10px;">6 дверей участі</h3>
+      <div class="doors-grid" id="doorsGrid"></div>
+
+      <div class="principle-box">
+        <div class="p-label">Операційний принцип · Стаття II</div>
+        <p>Documentation Before Memory — жодний критично важливий процес не залежить лише від пам'яті однієї людини. Усі рішення, статуси, кейси й партнерства фіксуються в офіційних системах обліку.</p>
+      </div>
+
+      <h3 style="font-size:14px;text-transform:uppercase;letter-spacing:.04em;color:var(--ink-soft);margin:22px 0 6px;">Протоколи та операційні документи</h3>
+      <ul class="protocol-index" id="protocolIndex"></ul>
+    </section>
+
+    <!-- ===================== DOCUMENT CENTER ===================== -->
+    <section class="view" id="view-docs">
+      <div class="view-head">
+        <div class="kicker">07 · Документи</div>
+        <h2>Документ-центр за рівнем доступу</h2>
+        <p>Той самий перелік документів, що й у розділі «Як», але згрупований за рівнем доступу, а не за номером. Категорії без завантаженого документа позначені «Document not yet added» — нічого не вигадано.</p>
+      </div>
+      <div id="docCenterByAccess"></div>
+    </section>
+
+    <!-- ===================== COUNTRY DIRECTOR DASHBOARD ===================== -->
+    <section class="view" id="view-cd">
+      <div class="view-head">
+        <div class="kicker">08 · Country Director</div>
+        <h2>Country Director Dashboard</h2>
+        <p>Головний екран для директорок країн: моя роль, контакти лідерства, операційні документи й ресурси, недоступні волонтеркам. Візуальна позначка 🔵 — не технічний захист (див. банер вище).</p>
+      </div>
+
+      <div class="hero-grid" style="margin-bottom:26px;">
+        <div class="card">
+          <h3>Моя роль</h3>
+          <p style="font-size:13.5px;color:var(--ink-soft);margin:0 0 10px;">Country Director відповідає за запуск і координацію Womafreesm у своїй країні: партнерства, волонтерська мережа, звітність перед Global HQ.</p>
+          <div class="chip-row"><span class="chip">Партнерства</span><span class="chip">Волонтерська мережа</span><span class="chip">Звітність</span><span class="chip">Фандрейзинг локально</span></div>
+        </div>
+        <div class="card">
+          <h3>Приклади Country/Regional Directors</h3>
+          <div class="team-grid" id="cdExamples"></div>
+        </div>
+      </div>
+
+      <h3 style="font-size:14px;text-transform:uppercase;letter-spacing:.04em;color:var(--ink-soft);margin:0 0 10px;">Контакти лідерства за напрямом</h3>
+      <div class="dept-grid" id="cdLeadershipContacts" style="margin-bottom:26px;"></div>
+
+      <h3 style="font-size:14px;text-transform:uppercase;letter-spacing:.04em;color:var(--ink-soft);margin:0 0 10px;">Ресурси для Country Director</h3>
+      <div class="reg-grid" id="cdResources"></div>
+    </section>
+
+    <div class="footnote">Womafreesm — World Organization of Women Nations · Internal Team Hub · Оргструктура звірена з документом «Организационная структура Womafreesm», жовтень 2026 · дані оновлюються локально (localStorage) у цьому браузері · рівні доступу — візуальна навігація, не технічний захист</div>
+  </main>
+</div>
+
+
+<!-- ===================== MODALS ===================== -->
+<div class="modal-bg" id="modalBg">
+  <div class="modal" id="modalBody"></div>
+</div>
+
+<script>
+/* =========================================================================
+   DATA LAYER
+   Усі дані нижче — прості JS/JSON-об'єкти. Замінити на реальні дані можна,
+   підмінивши вміст масивів (наприклад, підключивши fetch до реального API/CRM)
+   без зміни розмітки чи логіки рендерингу.
+   ========================================================================= */
+
+const PILLARS = {
+  research:  { key:"research",  label:"Дослідження (45–64)",           color:"var(--accent-research)" },
+  pathway:   { key:"pathway",   label:"Women's Protection Pathway",     color:"var(--accent-pathway)" },
+  assembly:  { key:"assembly",  label:"World Women's Assembly",         color:"var(--accent-assembly)" },
+  wlce:      { key:"wlce",      label:"WLCE Index",                     color:"var(--accent-wlce)" },
+  spirit:    { key:"spirit",    label:"Духовна коаліція / Хартія",      color:"var(--accent-spirit)" },
+  culture:   { key:"culture",   label:"«Вне конкуренции» / FreeWoman",  color:"var(--accent-culture)" },
+  reading:   { key:"reading",   label:"Womafreesm Reading Order",       color:"var(--accent-reading)" }
+};
+
+const STATUS = {
+  live:    { label:"Запущено",              cls:"status-live" },
+  dev:     { label:"У розробці",            cls:"status-dev" },
+  pilot:   { label:"Пілот",                 cls:"status-pilot" },
+  funding: { label:"Залежить від фінансування", cls:"status-funding" },
+  paused:  { label:"Призупинено",           cls:"status-paused" },
+  done:    { label:"Завершено",             cls:"status-done" }
+};
+
+// ---- ORG CHART v2.2 (травень 2025) — надано командою, реальна структура ----
+const ORG_META = {
+  version: "Org Chart v2.2 · Травень 2025",
+  tagline: "Evidence data · Legal rapid response · Infrastructure",
+  synarchy: "Синархат — спільне управління чоловічого та жіночого начала"
+};
+
+const BOARD = [
+  { name:"Iryna Iozhytsia", role:"Board Chair", ua:"Голова Ради директорів", access:"restricted" },
+  { name:"Marina Sukhomlinova", role:"Director", ua:"Директорка", access:"restricted" },
+  { name:"Oksana Krasnova", role:"Treasurer", ua:"Скарбниця", access:"restricted" },
+  { name:"Alina Shonina", role:"Secretary", ua:"Секретарка", access:"restricted" },
+  { name:"Vita Bondarenko", role:"Director", ua:"Директорка", access:"restricted" }
+];
+
+const CONTROLLING_BODIES = [
+  { name:"Ethics & Charter Committee", ua:"Етичний комітет: хартія, цінності, публічна адвокація" },
+  { name:"Audit & Transparency Board", ua:"Аудиторська і прозора рада: фінансовий аудит, квартальні звіти" },
+  { name:"Risk & Security Council", ua:"Рада з ризиків і безпеки: управління ризиками, кризове управління" },
+  { name:"Data Governance Council", ua:"Рада з управління даними: етика даних, DPIA, методологія, надійність" },
+  { name:"Legal & Compliance Committee", ua:"Юридичний і комплаєнс комітет: захист, санкції, регуляторні ризики" }
+];
+
+const EXECUTIVE_CORE = [
+  { name:"Iryna Lutsenko", role:"CEO", ua:"Генеральна директорка", access:"restricted", photo:"data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAcFBQYFBAcGBgYIBwcICxILCwoKCxYPEA0SGhYbGhkWGRgcICgiHB4mHhgZIzAkJiorLS4tGyIyNTEsNSgsLSz/2wBDAQcICAsJCxULCxUsHRkdLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCwsLCz/wAARCADIAMgDASIAAhEBAxEB/8QAHwAAAQUBAQEBAQEAAAAAAAAAAAECAwQFBgcICQoL/8QAtRAAAgEDAwIEAwUFBAQAAAF9AQIDAAQRBRIhMUEGE1FhByJxFDKBkaEII0KxwRVS0fAkM2JyggkKFhcYGRolJicoKSo0NTY3ODk6Q0RFRkdISUpTVFVWV1hZWmNkZWZnaGlqc3R1dnd4eXqDhIWGh4iJipKTlJWWl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi4+Tl5ufo6erx8vP09fb3+Pn6/8QAHwEAAwEBAQEBAQEBAQAAAAAAAAECAwQFBgcICQoL/8QAtREAAgECBAQDBAcFBAQAAQJ3AAECAxEEBSExBhJBUQdhcRMiMoEIFEKRobHBCSMzUvAVYnLRChYkNOEl8RcYGRomJygpKjU2Nzg5OkNERUZHSElKU1RVVldYWVpjZGVmZ2hpanN0dXZ3eHl6goOEhYaHiImKkpOUlZaXmJmaoqOkpaanqKmqsrO0tba3uLm6wsPExcbHyMnK0tPU1dbX2Nna4uPk5ebn6Onq8vP09fb3+Pn6/9oADAMBAAIRAxEAPwD6RooooAKKKKACiiigAooooAKbJIsa5Y07pXgnxj+Kd3a6zJoGgTlWiXZcTRnLBj1VfT3P4UDSueoa/wCOLHRo9kk8fn5HyBhx9T2/nVbTvGkd6ona4CIOWCjIx6jNfKctzczndcTAk8kltzZ9zVFNd1LSbhWs9RZgD0EnH5U9CuU+14vENo6giVHGQMqeuelTR63au2MkV8l2PjrxJFp8MEV0kCj5i6rknJyByKfN8QvEEORLr94STnl+BRoTys+u4r23mHySofxqYMpPBBr5N0z45eI9NnRpXttSiHBEq4OP94d69J8N/tB6DqLxwapby6RMxA8xm8yLPuRyPxFK4crPaqKqWGoQahaRzwSpIjjhlOQfoe9W6BBRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAcf8UfEd34X+H+oahYkLdfLFG5/gLtt3fUV8mAMMzzOWkfLsSeTnnJJr2j40+I11vWYdCtZHNtZNumI5EkvYY77efxPtXnNvpLXlwkCjHBYnrwOpJ7/4kelZTmo6HVSptq5yk0RuYS8lxOijhUAABPpwaxTZn7apKkKD0bArvdQuoraX7NptiL67+6pVdwQe3+PU1kz6NqfmLNd2Zidmyw2nGKIyuVKBX1YS29wkyFliIC8N0OBnp2qvdSSm281iZEPJyOCP8a7e18O/aNJ2yozrJxG3YN3Ht2qtYaA+2WxuISC2dmf4vUfiKOZISptnCLZJckmB/LcDoR/WoJVktSEuYiwz98dxW/eaPJpuoBUyEPzIPUelRanZsbMSBS6Ebtvcf/XpppkuLibXgH4oax4Em+zxXDXWkyNua2kOVU9yuehr6p8F+NrDxhpUVxbnZIybihYH8iK+HmCGP94xMb8iQenY/wBDXpHwB8UXGi/Ea20qZ91te5jzngHHDD/P8qtGErbn1/RRRTJCiiigAooooAKKKKACiiigAooooAKKKKACsvxJrEWgeHbvUpSMQpkAnGW6AfnWpXlXxjvJrmTT9Ii3eWN1zKAeuOFH5mpk7K5cI80kjyZjNql9NeXOS8zEg+5ySf5iq2kJe69rM+m6WRGHURyXHaOPvj3J4FaGuTrpHh6aZW/et+6jPrkcmul+EGkC10MXMijzZ23se/tXDe/vHrqKWh0vh7wZpuhWiRQQqzj70jjLMfWte80K3vYNskSkDvityGOPv2qc+WUI9RVxh1uRKp0scrH4ct7aBlEaleorF1nRA8BZE2uvIPeu8m2eWqVl6lCroTjpSnHqXTknozxXXLQ3NvI4UebbuD07H/6/86xfsyXFmAvRxnI7HuPwIrutStAutyKozHcI0eO2cZH8q5CztvLnlgbko4+XpwSRn8wPzp02Z1Innklt5F1c2jqcRtuQjsD/APrzUvhK9fRPF1hfqu82lwjqPUA8j8s1qeJ7Q2erwzg/7LKRx0P+FVNC0573xHBZIxwZhmQD7qY3Fj7Ac11p3Vzz5KzsfdNvNHc2sU8R3RyIHU+oIyKkqhocJt9AsYWzmOBEORjooFX6oxCiiigAooooAKKKKACiiigAooooAKKKKACvK/HcAm8SzzkElESMDPB/zzXqleV+L7hJPEN0OAqH5sD0H/66yq/CdGH+M8f8eD7Td29jHnZB94f7RPP6Yr1XwPb/AGfRrePp8oryq4lN+jX6xtNLcSFlRep+YgD9K6bTE8b2sazi2do0GfJjdcgfTrWCp3SR3+0Suz2aGIlenFW440VCTjGOa8ptvjHLpz/ZdR0OaJ1GCWba35EV22m69Hq2mx3Vux2S888EVq1yGKvU2NR4/wB2x/i9qy9QDKjAfjVg6gIFkkdwqouWJ7CuI8QfE7SbFTFGjzSHuCMVm1z7GyfJ8QzUbUK0cpGCrhs/jXDalAINanG3b8+zPpknH6gUt/8AEC7vEJtrGdl6DEZIxU2vsTqTTbeZIlkAHTIwankcHqEpxmtDm/FtuJbcT4ODkn2PB/oa2fgxplvqPi6WCe281xbFM9Bt5BB9iCB+FV9bQT6ZOgwQp3r9CM1rfALUYoPiFcWkxaOa5iMceR3X5iPbjNdMGcFVH0xZq6WcKyHLhAG+uKmoHA4orQ5wooooAKKKKACiiigAooooAKKKKACiiigBHYIhY9AM14T4nl1K80nWLnTrdrm5ZZZECYztAJJAPsTXtOtz/ZdCvp/+ecDt+hrzv4br9tmuBIMh7Yqc+5xj8hWc9WkbU9IuR4f4Y0qS60qC/wBQurh7Z2/cQsfLVY+oJC9SfyrpzqllcPJb6T4YtZ0tkJknkTHA9D1NWdD06QaRY6ZKm2Syd7WVSPumNiuD+Wfxr0XTdBto4AUjiD+pjzUymozOynBundHjN0JryR1ghl091JUBi01uxHZkfJAOOq49ea7T4ZeIYtVtprKWP7DcWLlLmAKdqP2IJ7Hn8q7ubQlkfzZGWRgOP3YH9TXGeEtOT/hYnieVID5Et6irJxhjGgDgD/eJqJzUug4xcbalHxl4uvLXUh4fs7dTeXSEs0p3JEmfvcdfpXOxW2j6bOscltLrF6ELS44Ve54HA+nNafjuFIfiqtx1E9rtBA67WBI/I5/Cu80bTYmgEqRoCwyXWIEn696qnNU7MJRdS9zyu78QaDKzJJ4a+z4O3z0z8vbG4YPXirGvSJvSaNyqC34wNx+6cV6DrPhRL3LNsIJycoRn8M1xGvWhs/NiGCY4lUE9+1ROopyuhqm4xszLt2e70SOV48NNZqxyu0hhwRjP+1+lXfgfprXPxQhuJFyYElnY+ny7R/Op7CFXsbdgP4ZEJA59f6V2PwMt0tr/AFENasrygtHPjh0BKlc+xx+dXDVnPUske00UUVucYUUUUAFFFFABRRRQAUUUUAFFFFABRRRQBieMpDF4P1Jh18kj86474TnJulOMrCn/AKE1df4yDN4Vu0UE7lxwPauI+HMn2bxO8HAWWFx9fmyKzl8SN4fw2Z3iy0m0nx/f3sEDzWlyyPPFEMujbQPMUfxZAAIHPAIzzWxpninRFgBfUbZQf4ZJQjD6hsEVe8aRNb66twq7hJGD+XFcH4l1GEWxL2wLN0Yrk1hP4j0KOtNI6XWfiBpwA0/SAl3qEx2RBG3Ih/vMRxgdcDk9Kv8AhHQU0jT137jcNlnZjljkk5PuSST7muU8EeEysi6tdAeeTlFJ+4PSu/h1S0ikfzv3bAY2ucf/AK6W5TSirI8/8faSLq4jngBN+jhrb03D19iMg/WpvC/jKx84afdBtPvI+GhlYdfY9/qKd4z8S6Zpl7Bc+YJJADhFOTzXCWynXb26v7mBVSUjajgHp/WkvMv0PWdV1a3S33+fGicnczgL+ZrznxBKrXE5yCGC4P4f/rpbdLaGMLFa28TggEpEo/HpVDUXa4uJhgnBPJ9qmyuJ7E2jiT7IoyqqBKwJ6DgV7J8K7Qw+E/MkQZM8vltjB2ls/wA68j06BV02AHHzdT6V7t4KGPB9hxjKE/qa6Ke559d3Ru0UUVucgUUUUAFFFFABRRRQAUUUUAFFFFABRRRQBQ1uMy6POgGSVOB+FedaBCLPxZbOM/KwXj3JH9a9NvF32zr6qf5VwqWhTXfIUDfPbAxsegkB3KPxwRUS3TNYPRo6HxXZefYLcquTAfm/3TXnesWEV3aMQqmWH51yM54r12J47yyVyAySpkg+hHSuC1jTVstSaAMCyjcoz95D2NYVo/aOrC1PsM4+3s9R0IWpTWbw2kkIZh5SyFW9gRyPbNbV7pOv30OxLzRtSjKM4EqNAxAOOMGtKWyjudORO2OCOx9RWO0d3p6eW1nLdxD/AJ5SdfT5T0q4OL3PUUVOPuuz87HA6v4L1f7TFcXMul6Ys0bSriUuQAM4571zd1Z6m0scFjq80m4KTKF2qCeoUHk16HqSX98Atvo7W6gBVZ+Co+pqpY6G9k5mlO+YnGey05OMS/ZxgrzlfyX+YlppUmkeGJ57y5a6mwqq74yGJ6cVn28LTaczbN0kzcY6kk8D+VaviSRn0Sys4yQbiU4PqBxn9T+VbnhLR0n1CGVUzZ2LhQzdHmPQe+ByfoK50nKRxVJqKuQ+I7BdLXTtMTHmQQK0vHVyRn+Ves+FVC+FNNAGP3CmvHPEV5LrHia8lj+ZRMLaP/0Ef1Ne5WFuLTT7e3H/ACyjVPyFdMN2ebUfuq5YooorUwCiiigAooooAKKKKACiiigAooqOe5htYjJPKkUY6s7BR+tAElFc3d+P/DtoSPtpnYdRChb9elec+PfjFrllC58NafAlsq/Nc3A3SA+oj6AD1JP0pKSbtct05pXsezzf6lue1eda54q0iyaS5WcTiJVjBgO7y5Ac7T2GOM/Wvnaf4h+J9XvVfVtavLuMk5h8zZH/AN8rgV0Fvq0Ugnt0J8i7RZowTwWAwR/P8qmqnEqilI1PF/xb8US2t1b6TcDRrfzWJSEb5drHgrIegznoODW94O14+KNBjvXuXfUIiI7gsxL7gOpz6jmvL9QYTymW2PnbB80f8YHTcP7w7H/GpPBOrr4c8SxzRO32O4ISdD/AOzdecHv781nNc8DopWhP1Pd9P1Rop/s10Nqt0YdM/wBK6KB4Dw+Kwzbw3cKuuGBGc1Wuxf2VuTayBgo4VxnH41zRkdzRv6oLeOPIAxivO/E+uW9jEY0YGRuMDrVLVfFGtSFrfylRumRzXIXllfTymSfeWbuaptCvZWJtT16W6kik3fNEu1FHRBXpPg/xrpepeDLCx8+3sryxjkSSNzt3v03r/eyCSe+c15Nd6c9tAjgE5yD+NV7SE27BnTJAyPrVRlynNUi5WPb9A0VG8S6JbDlCGvpV9P7ufqMV63XyxY/FC98A3FretAuqs6+U6TOQwiBH3W7EZwMg9K9r8H/GXwb4xt4xb6pFY3rcGzvGEUgPtk4b8DXTT1Vzjq6Ssd5RSBgQCDkHoaWrMgooooAKKKKACiiigAooqvf3aWNjNcyfdiUtj19qASvoYnifxP8A2OotrULJeOM88iMep9/avPL0Xmpy+dezyzuecseB9B0FXn8y9vJLidt0srb2NWltSBx0rzalWU3pse7QoRpR13Oal08KD/hWbeWKvCyMuQQRyK6u6iCg54NYN04WQjsahaGktTwnXNOOl6zPbZKouWQ+oxxUmn6kUtkgdyGV90Tf3T6fjXR/Emx8u5tLkDlwUJ/WuAnYlvLBxnkY9RXrw/eU1c8GovZVWkdHeXHAuoSwRjlgOsb98fjWbLdvLIJcrJjkkcH8R3p1rO5VtxHzDDAd/eqExAucJ91utKMLaMcp31R7v8NvFb6joiRyEs9ufLfJ59j+VeirPHMB3DV82/DrWho3iiFZWItrs+TJk8Ak/Kfz/nXv3zxx5RsdxiuGtT5JeR6eHqe0h5mfr+ikH7TCue5AqrBpcd7bqwXnHNdDa3qzRtb3AG49CKgSEWkjbPuntWJs0cJrWmlrpYAuFHJrOTSGMIOz7uR9favR5NMjvBLPj5z0+lZD2Jg3BgACc4qrkclzxjxrZ7kjmY48hzGQeOuD/SuKt4/Ls5rhgDn90gPqep/L+deyeOdOhisXnkjLRuVDFRnB9SPp/KvKL+xlt1RBh4V5DKc5z7duMV34eV42PNxMHGVzT8OfEXxd4WdP7J168hiTpC8nmRfTY2RXv3gr48arremCa+0y0meJtkwgZoznsRnI5FfLrDaMCu4+E94I/FL2LnEd5EQP99eR+ma1rJqLaMKFnNKWzPrrw7460fxE4ghla3vMZ+zz/Kx/3T0b8K6Svnq70sriSMlWU7lZeCp9Qexr0T4feOZdTlGiau+6+RcwzHjz1HUH/aA/MVyU6yno9zqrYdwXNHY9BoooroOQKKKKACuZ8Y3P7mCyB5kbzG+g6fr/ACrpq4PV7j7b4guHzlYz5a/h/wDXzWVaVonTho81RPsVoIAAOxqcgeXwpGKROB+lJK3BxXAes3cydQxzj865e+BMneuqu/mzWBdRFpOnPNIDgfiOmdAtnPVZwP8Ax015Sqb7k55xXrvxH2jQ4Yz97zwf/HTXlJHkq7HGWJP4V62G/hniYv8AiDJXwQoPNOUA8kcnmoIlMjbjVvGOD0rp3OW45E2jIODnIPpXv/gfxGNe8M28krA3EY8uUf7Q7/j1rwNOYwetdT4A15tI8QfZnbEN3x9GHT8xxXPiYc0L9jrwlTknZ9T2qRGWYSL0q4JBKozVeGVZYQeDkUivskNeRc92xo2x8tSKrX0InwQMUgmOOtO83jB5p3FY8/8AiLby2/hiaaM4KSIeRwecdPxrxe4IYPLBJ8pPzxnqp/qPQ/hXvnxLCt4EvuBwUx/32K+ep02yZFelhVeFzyMbK07EExDLjGD3OKvaTdTaVe21/bH97byCRffHb8elUXyzYNWoBtUA9K67XVmefe2qPpDSNUttb0mG7hIMcyBh/hVDUoprK6jvbRjHcW7iSNx2YcivPvhr4gNrcyaRM/ytmWHn/vpf6/nXqNwVubbqDXjVIOnOx71OoqtO57F4c1qLxD4etNTiwBOmWX+6w4ZfwINaleVfCHVTb32p6FI/y5+1Qg9uzj/0E/nXqtd0XdXPKnHlk0FFFFUQRXc4trOWc9I0LfkK85tQX/eNncxyT712XiqfydAlUHmYiMfief0FcnarhAMdK5a72R6ODjZOROBx9KimbnmrB+5VSdiM9a5jtKNzzkCsidCW6VqTMCeKoy+oqRnmfxKbEdmnYyMf/Ha8vu2/fbO1emfEp1drMAjIkOfptNeceUXumc/hXr4b+GeJi/4gyGLaP5VJIMLmn+WR0/Kmz/6nBGGrpOQW1O5CD60kxaJhIhKOhDKR2Iosicmn3KcdKLXC9j27wVr6avoUMmR5gGHXPRu9dVtB565rwbwFrh0nXfsrtiC5wB7N/wDX6flXt9pdq8YOeO1eLXp8k7H0OGq+0gmXREFHShV+arEIEiU4w+1YWOk474jR58CaiPRVb/x4V8/TAMuR2r6H+I6bfAep/wDXMf8AoQr54jG8MPSvUwfwM8XH/wARehWccA9fWp4TgbWP0PrTCCjYPSpEXK/Su088mSeWwuYrqE7ZIWDqR7dq9v0DV49V0mG5iPyyqDg9j3H4GvC5m2xEe1d18K72RrC6tifljlyvtkc1x4qCcebsd2Dm1Ll7no2magdB8Y6dqgbaiTBJfeNvlb+efwr6EByPWvnDVIRLaMOpIr3LwTqZ1jwXpd45zI0AST/eX5T+orGi9LGuKjZpm7RRRW5xnKeM7jL2lqD3MjD9B/Wsq2UbRUniKX7R4jlHaJVjH8/60yHCr06DFcNV3kz2KEeWmh7jAyPqRVK4NW5DVWXnPesTdGbLjFVpR8tXJEJPSqsqYQn0FIGeN/ESY/8ACRQxZ4WItj8cVxjyOzlUFdd8TYyviS2kX/lpEy/kf/r1zMSLGvvXtYdfu0eDiv4rGxxEcscmo7wA4q0Oe1QXK7kz6V0NHKivaLhvpVmUcGo4BgjNTyDj8KAM0krdKFJUr8wI7Yr2Twl4h/tLSo3Zv3q/K49G7141LkXqY7rXQeH9VOkaipZsQS4V/Y9jXLiKfPHTdHbha3s5WezPojSpRLEOcmtQoNtcl4Q1AXKlAQSK7DIxmvJse3c4f4psIvAF/k43GNfr84/wr52B8uYkj5TXvnxkuPK8HxwZ5nuVAHrgEn+leBSnbkevFenhFaB4+Nd6g64QZVhSx9OKkADW4B5wKYi4rrOErXr4UivQ/hTZH+zJ7gjiRzj8OK84vzyBXtPw4gjj8I22zB3JkkeprkxTtGx24NXnc6C5j/0ds+ld/wDBq+8zw/faex+a0uSwH+y4z/MGuKmQMp962fhRcfZPGd7Zs2FurbcB6sjf4Ma5KT1OzEq8T2Kiiius8084uJPP1O6l/vysR+dW4xhfeiivNluz3VpFIbKAR6VUkGAT2ooqSkVn5/nVG4YBWoooQmePfFKRIZbO7KkhXKnHuP8A61cdFcpIBuVo8/3hRRXr4V+5Y8TFr3ybO36UyUBo6KK7DiI8cL2xUpGVx3oopAZsgxdIfTg1dZQw6cUUVJR23w18TG01L7BcyY7Rkn73tXuFvdCVfeiivLxMVGWh7WFm5Q1PKfjVe7rvSrLJwqPMw+pCj+Rrx+Zf9JHtzRRXZh/4aPOxLvVZLFn5l9s0mML0ooroOYoXyneDXo/wo1hvs1zp0hyImDJ9D1/UfrRRXNiFeDOrCtqoj1EfOo9ai8P3f9l/ETSLjO1Xm8lj7OCv8yKKK8+G6PVqq8We9iiiiu08g//Z" },
+  { name:"Marina Sukhomlinova", role:"Founder", ua:"Засновниця · Лідерка бачення", access:"restricted", photo:"data:image/jpeg;base64,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" },
+  { name:"Oksana Krasnova", role:"Global Director of Strategic Partnerships, Fundraising & External Relations", ua:"Глобальна директорка зі стратегічних партнерств, фандрейзингу та зовнішніх зв'язків", access:"restricted", photo:"data:image/jpeg;base64,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" },
+  { name:"Vita Bondarenko", role:"Chief of Strategic Intake & Engagement / Director of Strategic Development & Org Infrastructure", ua:"Директорка зі стратегічного розвитку та організаційної інфраструктури", access:"restricted" },
+  { name:"Alina Shonina", role:"Chief Creative & Narrative Director", ua:"Креативна директорка з наративу", access:"restricted", photo:"data:image/jpeg;base64,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" },
+  { name:"Yuriy Chaichenko", role:"Executive Director, World Women's Assembly", ua:"Виконавчий директор World Women's Assembly", access:"cd", photo:"data:image/jpeg;base64,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" }
+];
+
+const INFRA_DEPARTMENTS = [
+  { name:"IT & Digital Infrastructure Department", ua:"ІТ та цифрова інфраструктура", head:"Андрій Прісич (CTDIO)", assigned:true, access:"cd",
+    functions:["CRM & Automation","Data Architecture","Member Systems","Research Systems","Analytics","AI & Automation","Volunteer Systems"] },
+  { name:"Cyber Security & Digital Protection Department", ua:"Кібербезпека та цифровий захист", head:"Spencer Scott", assigned:true, access:"cd",
+    functions:["SOC & Threat Monitoring","Incident Response","Infrastructure Security","Secure Communication","Privacy-by-Design","Risk & Vulnerability Management","Data Protection Controls","Crisis & Breach Protocols"] },
+  { name:"Data Analytics & Research Department", ua:"Аналітика даних і дослідження", head:"Чечель Анна (Director of Research & Scientific Programs) · Андрей Мурин (Head of Data Analytics & Evidence)", assigned:true, access:"cd",
+    functions:["Women's Life-Cycle Economy Index","Research & Surveys","Data Collection","Meta-Analysis & Insights","Evidence Reports","Policy Briefs","Data Visualization","Data Insights"] },
+  { name:"Data Protection & Research Ethics Office", ua:"Офіс захисту даних і дослідницької етики", head:"(призначається)", assigned:false, access:"restricted",
+    functions:["GDPR / UK GDPR Compliance","DPIA","Consent Management","Anonymization & Minimization","Ethics Review Board Support","Data Governance Policies","Research Ethics","University Compliance"] }
+];
+
+const OPERATIONAL_DEPARTMENTS = [
+  { name:"Finance & Procurement Department", ua:"Фінансовий департамент", head:"Ткач Александра (CFO)", assigned:true, access:"restricted",
+    functions:["Budgeting","Accounting","Cash Management","Donor Finance","Audit & Reporting","Procurement","Vendor Management","Tenders & Bids","Contract Management","Logistics & Supplies","Compliance & Due Diligence"] },
+  { name:"Fundraising Department", ua:"Фандрейзинговий департамент", head:"Oksana Krasnova (lead) · Алла Іванова (deputy)", assigned:true, access:"cd",
+    functions:["Individual Donors","Corporate Partnerships","Major Donor Relations","Fundraising Strategy","Fundraising Events & Galas","Grant Writing Support"] },
+  { name:"Grants Department", ua:"Грантовий департамент", head:"Коваленко Анжела (Director of Grants & Institutional Funding)", headPhoto:"data:image/jpeg;base64,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", assigned:true, access:"cd",
+    functions:["Grant Strategy","Grant Writing","Institutional Partnerships","Grant Compliance","Reporting to Donors","Grant Portfolio Management"] },
+  { name:"Legal Rapid Response Department", ua:"Юридичний департамент швидкого реагування", head:"Ілля Ілосевич (Global General Counsel & Chief Compliance Officer)", assigned:true, access:"restricted",
+    functions:["Case Intake & Verification","Referral & Partner Network","International Legal Support","Protection & Safety Protocols","Impact Litigation","Pro Bono Network"] },
+  { name:"Communications & Transparency Department", ua:"Комунікації та прозорість", head:"Самойлик Катерина (Director of PR & Media Communications)", assigned:true, access:"cd",
+    functions:["Public Transparency","Press Office","Media Relations","Crisis Communications","Fact-check Unit","Regulation Monitoring","Public Narrative","Reports & Impact","PR Events & Public Engagement"] },
+  { name:"Marketing & Growth Department", ua:"Маркетинг і зростання", head:"(призначається)", assigned:false, access:"cd",
+    functions:["Marketing Strategy","Brand Positioning","Campaign Management","Digital Marketing","SEO & Content Marketing","Email & Lifecycle Marketing","Analytics & Growth","Membership Growth","Conversion Optimization"] },
+  { name:"Chief Creative Narrative Office", ua:"Креативний офіс і наратив", head:"Alina Shonina", assigned:true, access:"cd",
+    functions:["Visual Identity & Design","Brand Identity","Graphic Design","UI/UX Design","Presentation & Slides","Infographics & Motion Design","Narrative & Storytelling","Messaging","Storytelling","Scripts & Films","Manifest & Values Language","Campaign Narratives","Editing & Post-production"] },
+  { name:"SMM", ua:"SMM — соціальні мережі", head:"Богдана Летич (SMM Lead)", assigned:true, access:"cd",
+    functions:["Контент-план","Соцмережі (8 платформ, 5 мов)","Публікації","Engagement","Координація з Creative Office"] },
+  { name:"Volunteer & Community Department", ua:"Волонтери та спільноти", head:"Ковшик-Ціонель Марія (Director of Volunteers & Community)", assigned:true, access:"team",
+    functions:["Volunteer Guild","Onboarding & Training","Task & Project Management","Engagement & Retention","Community Circles","Local Volunteer Networks","Recognition System"] },
+  { name:"People & Culture Department", ua:"Люди і культура", head:"(призначається)", assigned:false, access:"cd",
+    functions:["HR & People Operations","HR Policies & Handbook","Recruitment","Onboarding","Training & Development","Culture & Values","Wellbeing & Support"] }
+];
+
+const GLOBAL_STRUCTURE = {
+  hq: "Global HQ (London) · Глобальний штаб (Лондон)",
+  regions: ["Europe / Європа","North America / Північна Америка","LATAM / Лат. Америка","MENA / Близький Схід","Africa / Африка","Asia-Pacific / Азія-Тихоокеанський регіон"],
+  levels: [
+    "Regional Directors / Регіональні директори",
+    "Country Directors / Директори країн",
+    "City / Hub Coordinators / Міські координатори · Хаби",
+    "Community Circles & Members / Спільноти та учасниці"
+  ],
+  examples: [
+    { name:"Лілак Чижович Олеся", role:"Regional Director, Spain / Spanish-speaking countries + Global Executive Council member", ua:"Регіональна директорка (Іспанія та іспаномовні країни), членкиня Global Executive Council", photo:"data:image/jpeg;base64,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" },
+    { name:"Маріам Марина", role:"Country Director, Armenia", ua:"Директорка країни — Вірменія" }
+  ]
+};
+
+const KEY_FLOWS = [
+  { sym:"—", label:"Пряме підпорядкування / служить" },
+  { sym:"⇄", label:"Координація / спільна робота" },
+  { sym:"↔", label:"Операційна взаємодія" },
+  { sym:"⇌", label:"Інформаційний обмін" },
+  { sym:"⇢", label:"Нагляд / управління" }
+];
+
+const KEY_PRINCIPLES = [
+  "Непартійність і незалежність","Прозорість і підзвітність","Privacy-by-default",
+  "Доказовість і дані","Етика і добросовісність","Безпека учасниць",
+  "Інклюзивність і різноманіття","Стійкість і ефективність"
+];
+
+const PARTICIPATION_DOORS = [
+  { icon:"🎗", title:"Пожертвування", tag:"Donor" },
+  { icon:"🤝", title:"Волонтерство", tag:"Volunteer Guild" },
+  { icon:"🪪", title:"Членство", tag:"Member" },
+  { icon:"🔎", title:"Дослідження", tag:"Research" },
+  { icon:"⭐", title:"Проєкти", tag:"Projects" },
+  { icon:"🏛", title:"Партнерство", tag:"Media & Org" }
+];
+
+const FLAGSHIP_TITLES = [
+  "Women's Life-Cycle Economy Index",
+  "Legal Rapid Response System",
+  "World Women's Assembly",
+  "«Вне конкуренции» / FreeWoman",
+  "Women's Protection Pathway"
+];
+
+const COMPLIANCE_BADGES = [
+  "GDPR / UK GDPR","DPIA","Санкційний скринінг (UK/EU/OFAC)","Overhead Cap 20% (щоквартально)",
+  "Щомісячні звіти","Непартійна хартія","Legal Shielding & Privacy-by-Design"
+];
+
+// ---- Manually-added team members (customTeam) — always DEMO, added via "+ Додати людину" ----
+const DEFAULT_CUSTOM_TEAM = [];
+
+// ---- PROJECTS (7 pillars per "Единая логика Womafreesm"; flagship = named in Org Chart v2.2; statuses are illustrative/DEMO) ----
+const DEFAULT_PROJECTS = [
+  { title:"Дослідження жінок 45–64", pillar:"research", status:"pilot", desc:"Порівняльне дослідження в 5 країнах (UK, DE, PL, UA, ES): як ринок і AI занижують релевантність зрілої жінки.", owner:"Data Analytics & Research Department", demo:true, flagship:false },
+  { title:"Women's Protection Pathway", pillar:"pathway", status:"pilot", desc:"Маршрут допомоги конкретній жінці: перша розмова, карта ризиків, карта партнерів по Україні.", owner:"Legal Rapid Response Department", demo:true, flagship:true },
+  { title:"World Women's Assembly", pillar:"assembly", status:"dev", desc:"Перехід окремих кейсів у міжнародну інституційну дію: Хартія, ради, протоколи, робочі групи.", owner:"Юрій Чайченко (Executive Director, Assembly)", demo:true, flagship:true },
+  { title:"Women's Life-Cycle Economy Index", pillar:"wlce", status:"funding", desc:"Перетворення жіночого досвіду на дані й стандарти. Перший пілот: 10 країн, 15 мов.", owner:"Data Analytics & Research Department", demo:true, flagship:true },
+  { title:"Міжнародна духовна коаліція та Хартія", pillar:"spirit", status:"dev", desc:"Моральне підґрунтя нової цивілізаційної моделі; перше коло духовних підписантів.", owner:"CEO / Founder", demo:true, flagship:false },
+  { title:"«Вне конкуренции» / FreeWoman", pillar:"culture", status:"dev", desc:"Зміна культурних норм щодо віку, тіла, сили й цінності жінки.", owner:"Chief Creative Narrative Office", demo:true, flagship:true },
+  { title:"Womafreesm Reading Order / Book Club", pillar:"reading", status:"paused", desc:"Міжнародна інтелектуальна спільнота жінок, що творять і поширюють нові сенси.", owner:"Ситнов Нікіта (Book Club)", demo:true, flagship:false }
+];
+
+// ---- MEETINGS (illustrative cadence; "Перша Офіційна Зустріч" reflects a real project document) ----
+const DEFAULT_MEETINGS = [
+  { date:"2026-09-01", title:"Перша Офіційна Зустріч", desc:"Установча координаційна зустріч команди — старт операційного циклу.", tag:"Установча", attendees:"CEO + директори", demo:true },
+  { date:"2026-09-08", title:"Засідання Ради директорів", desc:"Огляд бюджету, ключових політик і статусів проєктів.", tag:"Governance", attendees:"Board", demo:true },
+  { date:"2026-09-15", title:"Щомісячне публічне оновлення", desc:"Стаття 23: статус проєктів, витрати, затримки й причини, наступний етап.", tag:"Прозорість", attendees:"Комунікації", demo:true },
+  { date:"2026-09-22", title:"Робоча група Асамблеї · Pathway", desc:"Огляд перших звернень і маршрутизації по Україні.", tag:"Асамблея", attendees:"Case Intake + Legal", demo:true }
+];
+
+// ---- REGISTRIES (7 mandatory operating systems, Ops Manual Art. IV — first 5 documented explicitly) ----
+const REGISTRIES = [
+  { owner:"Case Intake Coordinator", name:"Case Registry", desc:"Усі кейси зі статусами." },
+  { owner:"Partnership Coordinator", name:"Partner Registry", desc:"Усі партнерські організації зі статусами." },
+  { owner:"Research Coordinator", name:"Expert Registry", desc:"Усі зареєстровані експерти." },
+  { owner:"Operations Manager", name:"Project Registry", desc:"Усі активні проєкти з відповідальними й термінами." },
+  { owner:"Global Response Director", name:"Action Registry", desc:"Усі поточні дії реагування, прив'язані до кейсів." },
+  { owner:"Communications Coordinator", name:"Публічний реєстр результатів", desc:"Публічна панель результатів і прозорості (Стратегічний план, п.23)." }
+];
+
+// ---- KEY DOCUMENTS (subset of source-of-truth list, for quick reference) ----
+const DOC_TABLE = [
+  { code:"01", name:"Учредительная Хартия Assembly", section:"Governance" },
+  { code:"02", name:"Учредительная партнёрская структура", section:"Партнерства" },
+  { code:"03", name:"Кодекс этики и политика конфликта интересов", section:"Етика" },
+  { code:"07", name:"Протокол допуска партнёров", section:"Партнерства" },
+  { code:"08", name:"Протокол приёма кейсов", section:"Кейси" },
+  { code:"09", name:"Протокол юридического быстрого реагирования (LRR)", section:"Юридичний" },
+  { code:"10", name:"Протокол доказательств и данных", section:"Дослідження" },
+  { code:"11", name:"Операционный мануал Ассамблеи", section:"Операції" },
+  { code:"12", name:"Структура конфиденциальности и согласия", section:"Дані/GDPR" },
+  { code:"13", name:"Протокол публичных коммуникаций и медиа", section:"Комунікації" },
+  { code:"14", name:"Роли Assembly", section:"Ролі" },
+  { code:"16/17", name:"Путь партнёрства (+ схема по шагам)", section:"Партнерства" }
+];
+
+// ---- WHY / LOGIC FLOW ----
+const LOGIC_FLOW = [
+  { pillar:"research", title:"Womafreesm досліджує системну помилку", desc:"Виявляємо, де й чому жіночий досвід випадає з розрахунку ринку та AI." },
+  { pillar:"pathway", title:"Women's Protection Pathway створює маршрут допомоги конкретній жінці", desc:"Від першого звернення до безпечної координованої підтримки." },
+  { pillar:"assembly", title:"World Women's Assembly перетворює кейси на інституційну дію", desc:"Окремі історії стають міжнародною координацією та рішеннями." },
+  { pillar:"wlce", title:"WLCE перетворює жіночий досвід на дані й стандарти", desc:"Індекс життєвого циклу — вимірна основа для політик і практик." },
+  { pillar:"spirit", title:"Духовна коаліція і Хартія створюють моральне підґрунтя", desc:"Нова цивілізаційна модель, що визнає цінність жіночого досвіду." },
+  { pillar:"culture", title:"«Вне конкуренции» і FreeWoman змінюють культурні норми", desc:"Вік, тіло, сила й цінність жінки — без застарілих стереотипів." },
+  { pillar:"reading", title:"Womafreesm Reading Order формує інтелектуальну спільноту", desc:"Жінки, здатні творити й поширювати нові сенси у світі." }
+];
+
+const PRIORITIES = [
+  { title:"Інституційна стійкість", items:"система управління · фінанси · цифрова інфраструктура · захист даних · команда · прозорість · фандрейзинг" },
+  { title:"Доказовий результат", items:"завершення дослідження 45–64 · публікація методології · довіра до дослідницької спроможності" },
+  { title:"Підготовка глобального WLCE", items:"дослідницькі ради · методологія · етика · платформа · партнерства · фінансування першого етапу" },
+  { title:"Практичний захист", items:"запуск Pathway в Україні · партнерська карта · протокол першої відповіді · Legal Rapid Response" },
+  { title:"Міжнародна інституційна координація", items:"розвиток Assembly · експертні мережі · систематизація кейсів · робочі групи" },
+  { title:"Культурна й духовна трансформація", items:"«Вне конкуренции» · FreeWoman · духовна коаліція · Хартія · Reading Order" }
+];
+
+// ---- PROTOCOLS INDEX (How) ----
+const PROTOCOLS = [
+  { num:"01", name:"Учредительная Хартия Assembly", track:"Governance" },
+  { num:"02", name:"Учредительная партнёрская структура", track:"Партнерства" },
+  { num:"03", name:"Кодекс этики и политика конфликта интересов", track:"Етика" },
+  { num:"04", name:"Форма заявки на партнёрство", track:"Партнерства" },
+  { num:"05", name:"Форма подачи кейса", track:"Кейси" },
+  { num:"06", name:"Форма регистрации в экспертную сеть", track:"Дослідження" },
+  { num:"07", name:"Протокол допуска партнёров", track:"Партнерства" },
+  { num:"08", name:"Протокол приёма кейсов", track:"Кейси" },
+  { num:"09", name:"Протокол юридического быстрого реагирования", track:"Юридичний" },
+  { num:"10", name:"Протокол доказательств и данных", track:"Дослідження" },
+  { num:"11", name:"Операционный мануал Ассамблеи", track:"Операції" },
+  { num:"12", name:"Структура конфиденциальности и согласия", track:"Дані/GDPR" },
+  { num:"13", name:"Протокол публичных коммуникаций и медиа", track:"Комунікації" },
+  { num:"14", name:"Роли Assembly", track:"Ролі" },
+  { num:"15", name:"Structure Assembly v2", track:"Governance" },
+  { num:"16", name:"Путь партнёрства", track:"Партнерства" },
+  { num:"17", name:"Путь партнёрства — схема по шагам", track:"Партнерства" }
+];
+
+/* =========================================================================
+   STATE (localStorage-backed, falls back to defaults)
+   ========================================================================= */
+function loadState(key, fallback){
+  try{
+    const raw = localStorage.getItem(key);
+    if(!raw) return JSON.parse(JSON.stringify(fallback));
+    return JSON.parse(raw);
+  }catch(e){ return JSON.parse(JSON.stringify(fallback)); }
+}
+function saveState(key, value){
+  try{ localStorage.setItem(key, JSON.stringify(value)); }catch(e){ /* storage unavailable */ }
+}
+
+let team = loadState('wf_team', DEFAULT_CUSTOM_TEAM);
+let projects = loadState('wf_projects', DEFAULT_PROJECTS);
+let meetings = loadState('wf_meetings', DEFAULT_MEETINGS);
+
+let layerFilter = 'all';
+let statusFilter = 'all';
+
+/* =========================================================================
+   NAV
+   ========================================================================= */
+function switchView(view){
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(b=>b.classList.remove('active'));
+  document.getElementById('view-'+view).classList.add('active');
+  document.querySelector('.nav-item[data-view="'+view+'"]').classList.add('active');
+}
+document.querySelectorAll('.nav-item').forEach(btn=>{
+  btn.addEventListener('click', ()=>switchView(btn.dataset.view));
+});
+
+/* =========================================================================
+   CLOCK
+   ========================================================================= */
+function tickClock(){
+  const now = new Date();
+  const opts = { weekday:'long', year:'numeric', month:'long', day:'numeric' };
+  const dateStr = now.toLocaleDateString('uk-UA', opts);
+  const timeStr = now.toLocaleTimeString('uk-UA', {hour:'2-digit', minute:'2-digit'});
+  document.getElementById('clockBox').innerHTML = dateStr + '<br>' + timeStr;
+}
+tickClock(); setInterval(tickClock, 30000);
+
+/* =========================================================================
+   RENDER: TODAY
+   ========================================================================= */
+function renderToday(){
+  const liveCount = projects.filter(p=>p.status==='live'||p.status==='pilot').length;
+  const teamCount = team.length;
+  const upcoming = [...meetings].filter(m=>new Date(m.date) >= new Date('2026-08-31')).sort((a,b)=>new Date(a.date)-new Date(b.date));
+  const nextMeeting = upcoming[0];
+
+  document.getElementById('snapshotRow').innerHTML = `
+    <div class="cell"><div class="num">${projects.length}</div><div class="label">активних напрямів</div></div>
+    <div class="cell"><div class="num">${teamCount}</div><div class="label">ролей у команді</div></div>
+    <div class="cell"><div class="num">${liveCount}</div><div class="label">у пілоті / запущено</div></div>
+    <div class="cell"><div class="num">${upcoming.length}</div><div class="label">подій попереду</div></div>
+  `;
+
+  document.getElementById('pillarChips').innerHTML = Object.values(PILLARS).map(p=>
+    `<span class="chip" style="border-color:${p.color};color:${p.color};">${p.label}</span>`
+  ).join('');
+
+  document.getElementById('upcomingMeeting').innerHTML = nextMeeting ? `
+    <div class="date mono" style="color:var(--seal-ink);font-size:12.5px;">${formatDate(nextMeeting.date)}</div>
+    <div style="font-family:'Source Serif 4',serif;font-weight:600;font-size:15.5px;margin-top:3px;">${nextMeeting.title}</div>
+    <div style="font-size:12.5px;color:var(--ink-soft);margin-top:3px;">${nextMeeting.desc}</div>
+  ` : `<div class="empty-state">Немає запланованих подій</div>`;
+}
+
+function formatDate(iso){
+  const d = new Date(iso);
+  return d.toLocaleDateString('uk-UA', {day:'numeric', month:'long', year:'numeric'});
+}
+
+/* =========================================================================
+   RENDER: WHO (org chart v2.2)
+   ========================================================================= */
+const ORG_LAYER_DEFS = [
+  { key:"governance", num:"1", label:"Governance Layer", ua:"Нагляд і легітимність" },
+  { key:"executive",  num:"2", label:"Executive Core", ua:"Виконавче ядро" },
+  { key:"infra",       num:"3", label:"Critical Infrastructure Layer", ua:"Інфраструктурний рівень" },
+  { key:"operational", num:"4", label:"Core Operational Departments", ua:"Операційні департаменти" },
+  { key:"global",      num:"5", label:"Global Structure", ua:"Глобальна структура" }
+];
+
+function renderLayerFilters(){
+  const opts = ['all', ...ORG_LAYER_DEFS.map(l=>l.key)];
+  document.getElementById('layerFilters').innerHTML = opts.map(k=>{
+    const def = ORG_LAYER_DEFS.find(l=>l.key===k);
+    return `<button class="${k===layerFilter?'active':''}" data-l="${k}">${k==='all'?'Усі рівні':def.num+' · '+def.ua}</button>`;
+  }).join('');
+  document.querySelectorAll('#layerFilters button').forEach(b=>{
+    b.addEventListener('click', ()=>{ layerFilter=b.dataset.l; renderLayerFilters(); renderOrgChart(); });
+  });
+}
+
+function renderFlowLegend(){
+  document.getElementById('flowLegend').innerHTML = KEY_FLOWS.map(f=>
+    `<span class="fitem"><span class="fsym">${f.sym}</span>${f.label}</span>`
+  ).join('');
+}
+
+function accessBadge(a){
+  const map = { team:["🟢 Team","access-team"], cd:["🔵 Country Director","access-cd"], restricted:["🔴 Restricted","access-restricted"] };
+  const [label,cls] = map[a] || map.restricted;
+  return `<span class="access-badge ${cls}">${label}</span>`;
+}
+
+function personCard(p){
+  const header = p.photo
+    ? `<div class="phead"><img class="photo" src="${p.photo}" alt="${p.name}"><div><div class="role" style="margin-bottom:2px;">${p.role}</div><div class="name" style="margin-bottom:0;">${p.name}</div></div></div>`
+    : `<div class="role">${p.role}</div><div class="name">${p.name}</div>`;
+  return `<div class="person">
+    ${p.access?accessBadge(p.access):''}
+    ${header}
+    <div class="scope">${p.ua||''}${p.verify?'<span class="verify-flag">Needs verification</span>':''}</div>
+  </div>`;
+}
+
+function deptCard(d){
+  return `<div class="dept-card">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;">
+      <div class="dname">${d.name}</div>
+      ${d.access?accessBadge(d.access):''}
+    </div>
+    <div class="dua">${d.ua}</div>
+    <div class="dhead ${d.assigned?'':'unassigned'}" style="display:flex;align-items:center;gap:8px;">${d.headPhoto?`<img src="${d.headPhoto}" alt="" style="width:26px;height:26px;border-radius:50%;object-fit:cover;flex:none;box-shadow:0 0 0 1px var(--line);">`:''}<span>Керівник(ця): ${d.head}</span></div>
+    <div class="func-chip-row">${d.functions.map(f=>`<span class="func-chip">${f}</span>`).join('')}</div>
+  </div>`;
+}
+
+function renderOrgChart(){
+  const show = k => layerFilter==='all' || layerFilter===k;
+  const blocks = [];
+
+  if(show('governance')){
+    blocks.push(`
+    <div class="layer-block">
+      <div class="layer-head"><span class="lnum">1</span><h3>Governance Layer</h3><span class="lsub">— нагляд і легітимність</span></div>
+      <div class="team-grid">${BOARD.map(personCard).join('')}</div>
+      <h4 style="font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:var(--ink-soft);margin:18px 0 0;">Controlling bodies / Контролюючі органи</h4>
+      <div class="committee-grid">${CONTROLLING_BODIES.map(c=>`
+        <div class="committee-card"><div class="cname">${c.name}</div><div class="cdesc">${c.ua}</div></div>
+      `).join('')}</div>
+    </div>`);
+  }
+
+  if(show('executive')){
+    blocks.push(`
+    <div class="layer-block">
+      <div class="layer-head"><span class="lnum">2</span><h3>Executive Core</h3><span class="lsub">— виконавче ядро</span></div>
+      <div class="team-grid">${EXECUTIVE_CORE.map(personCard).join('')}</div>
+    </div>`);
+  }
+
+  if(show('infra')){
+    blocks.push(`
+    <div class="layer-block">
+      <div class="layer-head"><span class="lnum">3</span><h3>Critical Infrastructure Layer</h3><span class="lsub">— інфраструктурний рівень</span></div>
+      <div class="dept-grid">${INFRA_DEPARTMENTS.map(deptCard).join('')}</div>
+    </div>`);
+  }
+
+  if(show('operational')){
+    blocks.push(`
+    <div class="layer-block">
+      <div class="layer-head"><span class="lnum">4</span><h3>Core Operational Departments</h3><span class="lsub">— операційні департаменти</span></div>
+      <div class="dept-grid">${OPERATIONAL_DEPARTMENTS.map(deptCard).join('')}</div>
+    </div>`);
+  }
+
+  if(show('global')){
+    blocks.push(`
+    <div class="layer-block">
+      <div class="layer-head"><span class="lnum">5</span><h3>Global Structure</h3><span class="lsub">— глобальна структура</span></div>
+      <div class="card" style="margin-bottom:14px;"><strong>${GLOBAL_STRUCTURE.hq}</strong></div>
+      <div class="global-strip">${GLOBAL_STRUCTURE.regions.map(r=>`<span class="region-chip">${r}</span>`).join('')}</div>
+      <ul class="global-levels">${GLOBAL_STRUCTURE.levels.map((l,i)=>`<li><span class="arrow">${i===0?'⇢':'↳'}</span>${l}</li>`).join('')}</ul>
+      <h4 style="font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:var(--ink-soft);margin:18px 0 0;">Приклади Country / Regional Directors</h4>
+      <div class="team-grid" style="margin-top:12px;">${GLOBAL_STRUCTURE.examples.map(e=>personCard({name:e.name, role:e.role, ua:e.ua, access:"cd"})).join('')}</div>
+    </div>`);
+  }
+
+  document.getElementById('orgLayers').innerHTML = blocks.join('') || `<div class="empty-state">Немає даних для цього рівня</div>`;
+}
+
+function renderTeam(){
+  document.getElementById('teamGrid').innerHTML = team.length ? team.map(p=>`
+    <div class="person">
+      <span class="badge-demo">DEMO</span>
+      <div class="role">${p.role}</div>
+      <div class="name">${p.name}</div>
+      <div class="scope">${p.scope}</div>
+      <div class="meta"><span>${p.region}</span><span>${p.group}</span></div>
+    </div>
+  `).join('') : `<div class="empty-state">Ще ніхто не доданий вручну — натисніть «+ Додати людину»</div>`;
+}
+
+/* =========================================================================
+   RENDER: WHAT (projects)
+   ========================================================================= */
+function renderStatusFilters(){
+  const opts = ['all', ...Object.keys(STATUS)];
+  document.getElementById('statusFilters').innerHTML = opts.map(s=>
+    `<button class="${s===statusFilter?'active':''}" data-s="${s}">${s==='all'?'Усі статуси':STATUS[s].label}</button>`
+  ).join('');
+  document.querySelectorAll('#statusFilters button').forEach(b=>{
+    b.addEventListener('click', ()=>{ statusFilter=b.dataset.s; renderStatusFilters(); renderProjects(); });
+  });
+}
+
+function renderProjects(){
+  const list = statusFilter==='all' ? projects : projects.filter(p=>p.status===statusFilter);
+  document.getElementById('projectList').innerHTML = list.length ? list.map(p=>{
+    const pillar = PILLARS[p.pillar] || {label:p.pillar, color:'#999'};
+    const st = STATUS[p.status] || {label:p.status, cls:''};
+    return `
+    <div class="project" style="--pillar:${pillar.color}">
+      <div>
+        <div class="title">${p.title}${p.flagship?'<span class="flagship-badge">★ Флагман</span>':''} ${p.demo?'<span class="badge-demo" style="position:static;margin-left:6px;">DEMO</span>':''}</div>
+        <div class="pillar-tag">${pillar.label}</div>
+        <div class="desc">${p.desc}</div>
+      </div>
+      <span class="status-pill ${st.cls}">${st.label}</span>
+      <div class="owner">Відповідальний(а):<br>${p.owner}</div>
+    </div>`;
+  }).join('') : `<div class="empty-state">Немає проєктів із цим статусом</div>`;
+}
+
+/* =========================================================================
+   RENDER: WHERE (registries + docs)
+   ========================================================================= */
+function renderRegistries(){
+  document.getElementById('registryGrid').innerHTML = REGISTRIES.map(r=>`
+    <div class="reg-card">
+      <div class="reg-owner">${r.owner}</div>
+      <h4>${r.name}</h4>
+      <p>${r.desc}</p>
+    </div>
+  `).join('');
+
+  document.querySelector('#docTable tbody').innerHTML = DOC_TABLE.map(d=>`
+    <tr><td class="code">${d.code}</td><td>${d.name}</td><td>${d.section}</td></tr>
+  `).join('');
+
+  document.getElementById('complianceRow').innerHTML = COMPLIANCE_BADGES.map(c=>
+    `<span class="citem">${c}</span>`
+  ).join('');
+}
+
+/* =========================================================================
+   RENDER: WHEN (meetings)
+   ========================================================================= */
+function renderMeetings(){
+  const sorted = [...meetings].sort((a,b)=>new Date(a.date)-new Date(b.date));
+  document.getElementById('meetingList').innerHTML = sorted.length ? sorted.map(m=>`
+    <div class="meeting">
+      <div class="date">${formatDate(m.date)}</div>
+      <div>
+        <div class="mtitle">${m.title} ${m.demo?'<span class="badge-demo" style="position:static;margin-left:6px;">DEMO</span>':''}</div>
+        <div class="mdesc">${m.desc}</div>
+        <div class="tag">${m.tag}</div>
+      </div>
+      <div class="attendees">${m.attendees}</div>
+    </div>
+  `).join('') : `<div class="empty-state">Немає запланованих зустрічей</div>`;
+}
+
+/* =========================================================================
+   RENDER: WHY (logic + priorities)
+   ========================================================================= */
+function renderWhy(){
+  document.getElementById('logicFlow').innerHTML = LOGIC_FLOW.map(f=>{
+    const pillar = PILLARS[f.pillar] || {color:'#999'};
+    return `
+    <div class="flow-step" style="--pillar:${pillar.color}">
+      <div class="dot"></div>
+      <div>
+        <div class="ftitle">${f.title}</div>
+        <div class="fdesc">${f.desc}</div>
+      </div>
+    </div>`;
+  }).join('');
+
+  document.getElementById('priorityList').innerHTML = PRIORITIES.map(p=>`
+    <li>
+      <div>
+        <b>${p.title}</b>
+        <div class="items">${p.items}</div>
+      </div>
+    </li>
+  `).join('');
+
+  document.getElementById('principlesRow').innerHTML = KEY_PRINCIPLES.map(pr=>
+    `<span class="chip">${pr}</span>`
+  ).join('');
+}
+
+/* =========================================================================
+   RENDER: HOW (protocols)
+   ========================================================================= */
+function renderProtocols(){
+  document.getElementById('protocolIndex').innerHTML = PROTOCOLS.map(p=>`
+    <li><span class="pnum">${p.num}</span> <span>${p.name}</span> <span class="ptrack">${p.track}</span></li>
+  `).join('');
+
+  document.getElementById('doorsGrid').innerHTML = PARTICIPATION_DOORS.map(d=>`
+    <div class="door-card">
+      <div class="dicon">${d.icon}</div>
+      <div class="dtitle">${d.title}</div>
+      <div class="dtag">${d.tag}</div>
+    </div>
+  `).join('');
+}
+
+/* =========================================================================
+   RENDER: DOCUMENT CENTER (grouped by access level — reuses PROTOCOLS,
+   the only verified document list we have; nothing invented)
+   ========================================================================= */
+const DOC_ACCESS_MAP = {
+  "Governance":"restricted", "Ролі":"cd", "Партнерства":"cd", "Етика":"cd",
+  "Кейси":"restricted", "Юридичний":"restricted", "Дослідження":"cd",
+  "Операції":"cd", "Дані/GDPR":"restricted", "Комунікації":"cd"
+};
+const TEAM_REAL_DOCS = [
+  { name:"Бібліотека документації для волонтерів", desc:"Повна бібліотека: онбординг, процеси, шаблони для волонтерок.", url:"https://docs.google.com/document/d/15GOg2K5Id6DKUxjqBZJvSys011I2JDffX5kAlsf_4i8/edit?usp=drivesdk" }
+];
+const CD_REAL_RESOURCES = [
+  { name:"Бібліотека Country Director", desc:"Операційні матеріали для директорок країн (Google Doc).", url:"https://docs.google.com/document/d/1_IyYMIOOTtPptdu7B5ztY5Hye2uCkgY8eJtcJPcTV5Q/edit?usp=drivesdk" },
+  { name:"For Country Director of Womafreesm", desc:"Робочий простір Country Director у Notion.", url:"https://app.notion.com/p/womafreesm/For-Country-Director-of-Womafreesm-33df7e43532780e98e1ae09ffd40914a?source=copy_link" },
+  { name:"Презентації Womafreesm", desc:"Папка презентацій (Google Drive).", url:"https://drive.google.com/drive/folders/1Lr6U0w1EcJ70bH7J3AQdhi3NPfqS_CcY" },
+  { name:"Щоденні таски — Іспанія", desc:"Таблиця щоденних завдань для країни (Олеся, Spain).", url:"https://docs.google.com/spreadsheets/d/1vdICrVpNI1f-epr50lXGKU_DcCI3VHQi/edit?rtpof=true&gid=1806118104#gid=1806118104" }
+];
+const CD_MISSING_CATEGORIES = [
+  "Country launch / setup documentation", "Country Director onboarding",
+  "Internal reporting templates (country activity reports)", "SOPs для Country Director",
+  "Outreach templates для партнерств у країні", "Grant-related resources для CD"
+];
+
+function renderDocCenter(){
+  const levels = [
+    { key:"team", label:"🟢 Team — усі", cls:"access-team" },
+    { key:"cd", label:"🔵 Country Director", cls:"access-cd" },
+    { key:"restricted", label:"🔴 Restricted — лідерство/Board", cls:"access-restricted" }
+  ];
+  const html = levels.map(lvl=>{
+    const docs = PROTOCOLS.filter(p => (DOC_ACCESS_MAP[p.track]||"cd") === lvl.key);
+    const realDocs = lvl.key==='team' ? TEAM_REAL_DOCS : (lvl.key==='cd' ? CD_REAL_RESOURCES : []);
+    return `
+    <div class="layer-block">
+      <div class="layer-head"><span class="access-badge ${lvl.cls}" style="position:static;">${lvl.label}</span></div>
+      ${realDocs.length ? `<div class="reg-grid" style="margin-top:12px;">${realDocs.map(r=>`
+        <div class="reg-card"><h4>${r.name}</h4><p>${r.desc}</p><a class="link" href="${r.url}" target="_blank" rel="noopener">↗ Відкрити</a></div>
+      `).join('')}</div>` : ''}
+      <ul class="protocol-index">${docs.length ? docs.map(p=>`
+        <li><span class="pnum">${p.num}</span> <span>${p.name}</span> <span class="ptrack">${p.track}</span></li>
+      `).join('') : (realDocs.length ? '' : `<li style="color:var(--ink-soft);">Document not yet added</li>`)}</ul>
+      ${lvl.key==='cd' ? `<div class="chip-row" style="margin-top:10px;">${CD_MISSING_CATEGORIES.map(c=>`<span class="chip" style="border-style:dashed;">${c} — Coming soon</span>`).join('')}</div>` : ''}
+    </div>`;
+  }).join('');
+  document.getElementById('docCenterByAccess').innerHTML = html;
+}
+
+/* =========================================================================
+   RENDER: COUNTRY DIRECTOR DASHBOARD
+   ========================================================================= */
+function renderCDDashboard(){
+  document.getElementById('cdExamples').innerHTML = GLOBAL_STRUCTURE.examples.map(e=>
+    personCard({name:e.name, role:e.role, ua:e.ua, access:"cd"})
+  ).join('');
+
+  const contacts = [
+    ...OPERATIONAL_DEPARTMENTS.filter(d=>d.access==='cd'),
+    ...INFRA_DEPARTMENTS.filter(d=>d.access==='cd')
+  ];
+  document.getElementById('cdLeadershipContacts').innerHTML = contacts.map(deptCard).join('');
+
+  document.getElementById('cdResources').innerHTML = CD_REAL_RESOURCES.map(r=>`
+    <div class="reg-card"><h4>${r.name}</h4><p>${r.desc}</p><a class="link" href="${r.url}" target="_blank" rel="noopener">↗ Відкрити</a></div>
+  `).join('') + REGISTRIES.map(r=>`
+    <div class="reg-card"><div class="reg-owner">${r.owner}</div><h4>${r.name}</h4><p>${r.desc}</p></div>
+  `).join('') + CD_MISSING_CATEGORIES.map(c=>`
+    <div class="reg-card" style="border-style:dashed;"><div class="reg-owner">Document not yet added</div><h4>${c}</h4><p>Завантажте матеріал у проєкт — з'явиться тут автоматично.</p></div>
+  `).join('');
+}
+
+/* =========================================================================
+   MODALS — add person / project / meeting (in-memory + localStorage)
+   ========================================================================= */
+function openModal(type){
+  const bg = document.getElementById('modalBg');
+  const body = document.getElementById('modalBody');
+  if(type==='person'){
+    body.innerHTML = `
+      <h3>Додати людину</h3>
+      <label>Ім'я</label><input id="m_name" placeholder="Напр. Олена К.">
+      <label>Роль</label><input id="m_role" placeholder="Напр. Country Assembly Director · Poland">
+      <label>Зона відповідальності</label><textarea id="m_scope" rows="2" placeholder="Короткий опис"></textarea>
+      <label>Регіон</label><input id="m_region" placeholder="Напр. Польща">
+      <label>Група</label>
+      <select id="m_group">
+        <option>Governance Layer</option>
+        <option>Executive Core</option>
+        <option>Critical Infrastructure</option>
+        <option>Core Operational Departments</option>
+        <option>Global Structure</option>
+        <option>Волонтерська спільнота</option>
+      </select>
+      <div class="modal-actions">
+        <button class="btn ghost small" onclick="closeModal()">Скасувати</button>
+        <button class="btn small" onclick="submitPerson()">Зберегти</button>
+      </div>`;
+  }
+  if(type==='project'){
+    const pillarOpts = Object.values(PILLARS).map(p=>`<option value="${p.key}">${p.label}</option>`).join('');
+    const statusOpts = Object.entries(STATUS).map(([k,v])=>`<option value="${k}">${v.label}</option>`).join('');
+    body.innerHTML = `
+      <h3>Додати проєкт</h3>
+      <label>Назва</label><input id="m_title" placeholder="Напр. Пілот WLCE у Польщі">
+      <label>Напрям</label><select id="m_pillar">${pillarOpts}</select>
+      <label>Статус</label><select id="m_status">${statusOpts}</select>
+      <label>Опис</label><textarea id="m_desc" rows="2"></textarea>
+      <label>Відповідальний(а)</label><input id="m_owner" placeholder="Роль або ім'я">
+      <div class="modal-actions">
+        <button class="btn ghost small" onclick="closeModal()">Скасувати</button>
+        <button class="btn small" onclick="submitProject()">Зберегти</button>
+      </div>`;
+  }
+  if(type==='meeting'){
+    body.innerHTML = `
+      <h3>Додати зустріч</h3>
+      <label>Дата</label><input id="m_date" type="date" value="2026-09-01">
+      <label>Назва</label><input id="m_mtitle" placeholder="Напр. Зустріч з партнером у Варшаві">
+      <label>Опис</label><textarea id="m_mdesc" rows="2"></textarea>
+      <label>Тег</label><input id="m_tag" placeholder="Напр. Партнерства">
+      <label>Учасники</label><input id="m_att" placeholder="Напр. CEO + Partnership Coordinator">
+      <div class="modal-actions">
+        <button class="btn ghost small" onclick="closeModal()">Скасувати</button>
+        <button class="btn small" onclick="submitMeeting()">Зберегти</button>
+      </div>`;
+  }
+  bg.classList.add('open');
+}
+function closeModal(){ document.getElementById('modalBg').classList.remove('open'); }
+document.getElementById('modalBg').addEventListener('click', (e)=>{ if(e.target.id==='modalBg') closeModal(); });
+
+function submitPerson(){
+  const name = document.getElementById('m_name').value.trim() || '—';
+  const role = document.getElementById('m_role').value.trim() || 'Нова роль';
+  const scope = document.getElementById('m_scope').value.trim() || 'Опис буде додано.';
+  const region = document.getElementById('m_region').value.trim() || '—';
+  const group = document.getElementById('m_group').value;
+  team.push({ name, role, scope, region, demo:true, group });
+  saveState('wf_team', team);
+  closeModal(); renderTeam(); renderToday();
+}
+function submitProject(){
+  const title = document.getElementById('m_title').value.trim() || 'Новий проєкт';
+  const pillar = document.getElementById('m_pillar').value;
+  const status = document.getElementById('m_status').value;
+  const desc = document.getElementById('m_desc').value.trim() || 'Опис буде додано.';
+  const owner = document.getElementById('m_owner').value.trim() || '—';
+  projects.push({ title, pillar, status, desc, owner, demo:true });
+  saveState('wf_projects', projects);
+  closeModal(); renderStatusFilters(); renderProjects(); renderToday();
+}
+function submitMeeting(){
+  const date = document.getElementById('m_date').value || '2026-09-01';
+  const title = document.getElementById('m_mtitle').value.trim() || 'Нова зустріч';
+  const desc = document.getElementById('m_mdesc').value.trim() || '';
+  const tag = document.getElementById('m_tag').value.trim() || 'Загальне';
+  const attendees = document.getElementById('m_att').value.trim() || '—';
+  meetings.push({ date, title, desc, tag, attendees, demo:true });
+  saveState('wf_meetings', meetings);
+  closeModal(); renderMeetings(); renderToday();
+}
+
+/* =========================================================================
+   GLOBAL SEARCH — matches org chart (board/executive/departments), custom
+   team, projects and meetings; jumps to the most relevant view.
+   ========================================================================= */
+function collectOrgPeople(){
+  const list = [];
+  BOARD.forEach(p=>list.push({ name:p.name, role:p.role, scope:p.ua, source:"Governance · Board" }));
+  EXECUTIVE_CORE.forEach(p=>list.push({ name:p.name, role:p.role, scope:p.ua, source:"Executive Core" }));
+  INFRA_DEPARTMENTS.forEach(d=>list.push({ name:d.head, role:d.name, scope:d.ua, source:"Critical Infrastructure" }));
+  OPERATIONAL_DEPARTMENTS.forEach(d=>list.push({ name:d.head, role:d.name, scope:d.ua, source:"Core Operational" }));
+  return list;
+}
+
+document.getElementById('globalSearch').addEventListener('input', (e)=>{
+  const q = e.target.value.trim().toLowerCase();
+  if(!q){ renderOrgChart(); renderTeam(); renderProjects(); renderMeetings(); return; }
+
+  const orgMatch = collectOrgPeople().filter(p => (p.name+p.role+p.scope).toLowerCase().includes(q));
+  const teamMatch = team.filter(t => (t.name+t.role+t.scope+t.group).toLowerCase().includes(q));
+  const projMatch = projects.filter(p => (p.title+p.desc+p.owner).toLowerCase().includes(q));
+  const meetMatch = meetings.filter(m => (m.title+m.desc+m.tag).toLowerCase().includes(q));
+
+  const peopleResults = [...orgMatch, ...teamMatch.map(t=>({name:t.name, role:t.role, scope:t.scope, source:'Додано вручну (DEMO)'}))];
+  document.getElementById('orgLayers').innerHTML = peopleResults.length ? `
+    <div class="layer-block"><div class="layer-head"><h3>Результати пошуку</h3></div>
+    <div class="team-grid">${peopleResults.map(p=>`
+      <div class="person"><div class="role">${p.role}</div><div class="name">${p.name}</div>
+      <div class="scope">${p.scope||''}</div><div class="meta"><span>${p.source}</span><span></span></div></div>
+    `).join('')}</div></div>` : `<div class="empty-state">Нічого не знайдено серед людей</div>`;
+
+  document.getElementById('projectList').innerHTML = projMatch.length ? projMatch.map(p=>{
+    const pillar = PILLARS[p.pillar] || {label:p.pillar, color:'#999'};
+    const st = STATUS[p.status] || {label:p.status, cls:''};
+    return `<div class="project" style="--pillar:${pillar.color}">
+      <div><div class="title">${p.title}${p.flagship?'<span class="flagship-badge">★ Флагман</span>':''}</div><div class="pillar-tag">${pillar.label}</div><div class="desc">${p.desc}</div></div>
+      <span class="status-pill ${st.cls}">${st.label}</span>
+      <div class="owner">${p.owner}</div></div>`;
+  }).join('') : `<div class="empty-state">Нічого не знайдено серед проєктів</div>`;
+
+  document.getElementById('meetingList').innerHTML = meetMatch.length ? meetMatch.map(m=>`
+    <div class="meeting"><div class="date">${formatDate(m.date)}</div>
+    <div><div class="mtitle">${m.title}</div><div class="mdesc">${m.desc}</div><div class="tag">${m.tag}</div></div>
+    <div class="attendees">${m.attendees}</div></div>`).join('') : `<div class="empty-state">Нічого не знайдено серед зустрічей</div>`;
+
+  if(peopleResults.length) switchView('who');
+  else if(projMatch.length) switchView('what');
+  else if(meetMatch.length) switchView('when');
+});
+
+/* =========================================================================
+   INIT
+   ========================================================================= */
+renderToday();
+renderLayerFilters(); renderFlowLegend(); renderOrgChart(); renderTeam();
+renderStatusFilters(); renderProjects();
+renderRegistries();
+renderMeetings();
+renderWhy();
+renderProtocols();
+renderDocCenter();
+renderCDDashboard();
+</script>
+</body>
+</html>
